@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
 import '../widgets/resik_logo.dart';
 import '../petugas/petugas_main_screen.dart';
+import '../warga/warga_main_screen.dart';
 import 'admin_register_screen.dart';
 import 'admin_main_screen.dart';
 
@@ -18,7 +19,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _passwordController = TextEditingController(text: 'admin123');
   bool _obscurePassword = true;
   bool _isLoading = false;
-  String _selectedRole = 'Admin'; // 'Admin' or 'Petugas'
+  String _selectedRole = 'Admin'; // 'Admin', 'Petugas', 'Warga'
 
   @override
   void dispose() {
@@ -40,8 +41,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       final isPetugas = _selectedRole == 'Petugas' ||
           email.contains('petugas') ||
           email.contains('ptg');
+      final isWarga = _selectedRole == 'Warga' ||
+          email.contains('warga') ||
+          email.contains('user');
 
-      if (isPetugas) {
+      if (isWarga) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const WargaMainScreen()),
+        );
+      } else if (isPetugas) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const PetugasMainScreen()),
         );
@@ -51,6 +59,36 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         );
       }
     });
+  }
+
+  Widget _buildRoleTab(String role, String defaultEmail) {
+    final isSelected = _selectedRole == role;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedRole = role;
+            _emailController.text = defaultEmail;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            role,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -103,7 +141,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Role Selection Chips
+                  // Role Selection Chips (Admin, Petugas, Warga)
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.cardSubtle,
@@ -112,66 +150,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     padding: const EdgeInsets.all(4),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedRole = 'Admin';
-                                _emailController.text = 'admin@resik.id';
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == 'Admin'
-                                    ? AppColors.primaryGreen
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                'Role Admin',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _selectedRole == 'Admin'
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedRole = 'Petugas';
-                                _emailController.text = 'petugas@resik.id';
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: _selectedRole == 'Petugas'
-                                    ? AppColors.primaryGreen
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                'Role Petugas',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _selectedRole == 'Petugas'
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        _buildRoleTab('Admin', 'admin@resik.id'),
+                        _buildRoleTab('Petugas', 'petugas@resik.id'),
+                        _buildRoleTab('Warga', 'warga@resik.id'),
                       ],
                     ),
                   ),

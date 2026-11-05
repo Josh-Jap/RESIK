@@ -16,7 +16,7 @@ void main() async {
   );
 
   try {
-    if (SupabaseConfig.supabaseUrl != 'https://YOUR_PROJECT_ID.supabase.co') {
+    if (SupabaseConfig.supabaseUrl != 'https://omapyuimorrmurughsok.supabase.co') {
       await SupabaseConfig.init();
     }
   } catch (e) {
