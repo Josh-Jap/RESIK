@@ -48,6 +48,31 @@ class UserModel {
     };
   }
 
+  /// Alias untuk kompatibilitas UI
+  String get namaLengkap => nameUsers;
+  String? get noHp => phoneNum?.toString();
+
+  /// Inisial nama untuk avatar (misal: "Budi Santoso" -> "BS")
+  String get initials {
+    final words = nameUsers.trim().split(RegExp(r'\s+'));
+    if (words.isEmpty || words[0].isEmpty) return 'U';
+    if (words.length == 1) {
+      return words[0].substring(0, words[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return '${words[0][0]}${words[1][0]}'.toUpperCase();
+  }
+
+  /// Format nomor HP rapi (misal: "081234567890" -> "0812-3456-7890")
+  String get displayPhone {
+    if (phoneNum == null) return '-';
+    String str = phoneNum.toString();
+    if (!str.startsWith('0')) str = '0$str';
+    if (str.length >= 10) {
+      return '${str.substring(0, 4)}-${str.substring(4, 8)}-${str.substring(8)}';
+    }
+    return str;
+  }
+
   UserModel copyWith({
     int? idUsers,
     String? nameUsers,

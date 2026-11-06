@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'core/app_colors.dart';
-import 'core/supabase_config.dart';
-import 'admin/admin_splash_screen.dart';
+import 'ui/theme/app_colors.dart';
+import 'backend/backend.dart';
+import 'ui/admin/admin_splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,11 +16,10 @@ void main() async {
   );
 
   try {
-    if (SupabaseConfig.supabaseUrl != 'https://omapyuimorrmurughsok.supabase.co') {
-      await SupabaseConfig.init();
-    }
+    await SupabaseConfig.init();
+    debugPrint('Supabase berhasil diinisialisasi: ${SupabaseConfig.supabaseUrl}');
   } catch (e) {
-    debugPrint('Inisialisasi Supabase: $e');
+    debugPrint('Inisialisasi Supabase (berjalan dalam fallback mode): $e');
   }
 
   runApp(const MyApp());

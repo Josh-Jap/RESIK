@@ -67,24 +67,26 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
   Future<void> _fetchSupabaseReports() async {
     try {
       final remoteList = await _supabaseService.getAllPickupRequests();
-      if (remoteList.isNotEmpty) {
+      if (mounted) {
         setState(() {
+          _reports.clear();
           for (final item in remoteList) {
             final statusLabel = _mapDbStatusToLabel(item.status);
-            _reports.insert(0, {
-              'id': item.idPickup ?? DateTime.now().millisecondsSinceEpoch,
+            final reporter = item.user?.nameUsers ?? 'Warga Griya Asri';
+            _reports.add({
+              'id': item.idPickup,
               'title': item.category ?? 'Pengaduan Sampah',
-              'location': 'Area Griya Asri',
+              'location': reporter,
               'time': 'Baru saja',
               'status': statusLabel,
-              'icon': Icons.delete_outline_rounded,
+              'icon': statusLabel == 'Selesai' ? Icons.eco_outlined : Icons.delete_outline_rounded,
               'desc': item.description,
             });
           }
         });
       }
     } catch (e) {
-      debugPrint('Menggunakan laporan lokal: $e');
+      debugPrint('Error fetching reports: $e');
     }
   }
 
@@ -339,17 +341,26 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
     final isCurrent = item['status'] == status;
     return Expanded(
       child: OutlinedButton(
-        onPressed: () {
+        onPressed: () async {
           setState(() {
             item['status'] = status;
           });
-          Navigator.of(modalCtx).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Status diubah ke "$status"'),
-              backgroundColor: AppColors.primaryGreen,
-            ),
-          );
+          final id = item['id'];
+          if (id != null) {
+            final dbStatus = status == 'Diproses'
+                ? 'in_progress'
+                : (status == 'Selesai' ? 'completed' : 'pending');
+            await _supabaseService.updatePickupStatus(id, dbStatus);
+          }
+          if (mounted) {
+            Navigator.of(modalCtx).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Status diubah ke "$status"'),
+                backgroundColor: AppColors.primaryGreen,
+              ),
+            );
+          }
         },
         style: OutlinedButton.styleFrom(
           backgroundColor:
@@ -382,12 +393,15 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
+        onPressed: () async {
+          final res = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder: (context) => const AdminBuatLaporanScreen(),
             ),
           );
+          if (res == true) {
+            _fetchSupabaseReports();
+          }
         },
         backgroundColor: AppColors.primaryGreen,
         elevation: 3,

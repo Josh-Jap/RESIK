@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS "Pickup_req" (
     pickup_date TIMESTAMPTZ,
     status TEXT DEFAULT 'pending', -- e.g. 'pending', 'in_progress', 'completed', 'cancelled'
     category TEXT,
-    photo VARCHAR(500)
+    photo VARCHAR(500),
     CONSTRAINT fk_pickup_user
         FOREIGN KEY (id_users) 
         REFERENCES "User"(id_users) 

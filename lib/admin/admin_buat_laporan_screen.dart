@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
+import '../models/pickup_req_model.dart';
+import '../services/supabase_service.dart';
 import '../widgets/resik_avatar_badge.dart';
 
 class AdminBuatLaporanScreen extends StatefulWidget {
@@ -32,21 +34,45 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
     super.dispose();
   }
 
-  void _handleSubmit() {
-    if (_locationController.text.trim().isEmpty) {
+  Future<void> _handleSubmit() async {
+    final location = _locationController.text.trim();
+    final desc = _descController.text.trim();
+
+    if (location.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lokasi tidak boleh kosong')),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Laporan berhasil dikirim dan masuk ke daftar pengaduan!'),
-        backgroundColor: AppColors.primaryGreen,
-      ),
+    final currentUser = SupabaseService.instance.currentUser;
+    final userId = currentUser?.idUsers ?? 1;
+
+    final newReq = PickupReqModel(
+      category: _selectedProblem,
+      description: '$location - $desc',
+      idUsers: userId,
+      status: 'pending',
+      pickupDate: DateTime.now(),
     );
-    Navigator.of(context).pop();
+
+    try {
+      await SupabaseService.instance.createPickupRequest(newReq);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Laporan berhasil dikirim dan masuk ke daftar pengaduan!'),
+          backgroundColor: AppColors.primaryGreen,
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengirim laporan: $e')),
+      );
+    }
   }
 
   @override

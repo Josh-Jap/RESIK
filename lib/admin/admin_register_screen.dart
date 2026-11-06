@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
+import '../services/supabase_service.dart';
 import '../widgets/resik_logo.dart';
 import 'admin_main_screen.dart';
 
@@ -30,7 +31,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -45,7 +46,13 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 700), () {
+    try {
+      await SupabaseService.instance.registerAdmin(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
       if (!mounted) return;
       setState(() => _isLoading = false);
 
@@ -60,7 +67,16 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
         MaterialPageRoute(builder: (context) => const AdminMainScreen()),
         (route) => false,
       );
-    });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mendaftar: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override

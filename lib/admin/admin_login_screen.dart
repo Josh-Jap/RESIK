@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
+import '../services/supabase_service.dart';
 import '../widgets/resik_logo.dart';
 import '../petugas/petugas_main_screen.dart';
 import '../warga/warga_main_screen.dart';
@@ -28,28 +29,28 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 600), () {
+    try {
+      final user = await SupabaseService.instance.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        role: _selectedRole.toLowerCase(),
+      );
+
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      final email = _emailController.text.trim().toLowerCase();
-      final isPetugas = _selectedRole == 'Petugas' ||
-          email.contains('petugas') ||
-          email.contains('ptg');
-      final isWarga = _selectedRole == 'Warga' ||
-          email.contains('warga') ||
-          email.contains('user');
+      final role = user?.role?.toLowerCase() ?? _selectedRole.toLowerCase();
 
-      if (isWarga) {
+      if (role == 'warga') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const WargaMainScreen()),
         );
-      } else if (isPetugas) {
+      } else if (role == 'petugas') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const PetugasMainScreen()),
         );
@@ -58,7 +59,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           MaterialPageRoute(builder: (context) => const AdminMainScreen()),
         );
       }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login gagal: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   Widget _buildRoleTab(String role, String defaultEmail) {

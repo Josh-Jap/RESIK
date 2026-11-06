@@ -24,7 +24,7 @@ class PaymentModel {
   factory PaymentModel.fromMap(Map<String, dynamic> map) {
     return PaymentModel(
       idPayments: map['id_payments'] != null ? int.tryParse(map['id_payments'].toString()) : null,
-      idUsers: int.tryParse(map['id_users'].toString()) ?? 0,
+      idUsers: int.tryParse(map['id_users']?.toString() ?? '0') ?? 0,
       qrisReference: map['qris_reference'] as String?,
       paidAt: map['paid_at'] != null ? DateTime.tryParse(map['paid_at'].toString()) : null,
       month: map['month'] as String?,
@@ -46,6 +46,34 @@ class PaymentModel {
       'year': year,
       'amount': amount,
     };
+  }
+
+  /// Format nominal dalam Rupiah (misal: 50000 -> "Rp50.000")
+  String get formattedAmount {
+    if (amount == null) return 'Rp0';
+    final str = amount.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = str.length - 1; i >= 0; i--) {
+      buffer.write(str[i]);
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        buffer.write('.');
+      }
+    }
+    return 'Rp${buffer.toString().split('').reversed.join()}';
+  }
+
+  /// Format tanggal bayar (misal: "15 Oktober 2026")
+  String get formattedPaidDate {
+    if (paidAt == null) return 'Belum ada pembayaran';
+    final dt = paidAt!;
+    const monthNames = [
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    final mName = (dt.month >= 1 && dt.month <= 12) ? monthNames[dt.month] : '${dt.month}';
+    return '${dt.day} $mName ${dt.year}';
   }
 
   PaymentModel copyWith({
