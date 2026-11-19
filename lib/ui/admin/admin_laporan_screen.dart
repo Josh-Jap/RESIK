@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../widgets/resik_detail_laporan_screen.dart';
 import 'admin_buat_laporan_screen.dart';
 
 class AdminLaporanScreen extends StatefulWidget {
@@ -40,8 +41,12 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
               'title': item.category ?? 'Pengaduan Sampah',
               'location': reporter,
               'time': 'Baru saja',
-              'status': statusLabel,
-              'icon': statusLabel == 'Selesai' ? Icons.eco_outlined : Icons.delete_outline_rounded,
+              'status': item.status ?? 'pending',
+              'statusLabel': statusLabel,
+              'photo': item.photo,
+              'icon': statusLabel == 'Selesai'
+                  ? Icons.eco_outlined
+                  : Icons.delete_outline_rounded,
               'desc': item.description,
             });
           }
@@ -70,106 +75,25 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
     if (_selectedFilter == 'Semua') {
       return _reports;
     }
-    return _reports.where((r) => r['status'] == _selectedFilter).toList();
+    return _reports.where((r) => r['statusLabel'] == _selectedFilter).toList();
   }
 
   void _showReportDetailModal(Map<String, dynamic> item) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.scaffoldBg,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    item['title'],
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                _buildStatusBadge(item['status']),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${item['location']} · ${item['time']}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Text(
-                item['desc'] ?? 'Tidak ada deskripsi tambahan.',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
-                  height: 1.4,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Ubah Status Pengaduan:',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _buildStatusActionButton('Baru', item, ctx),
-                const SizedBox(width: 8),
-                _buildStatusActionButton('Diproses', item, ctx),
-                const SizedBox(width: 8),
-                _buildStatusActionButton('Selesai', item, ctx),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ResikDetailLaporanScreen(
+          reportData: item,
+          role: 'admin',
         ),
       ),
-    );
+    ).then((_) => _fetchSupabaseReports());
   }
 
   Widget _buildStatusActionButton(
-      String status, Map<String, dynamic> item, BuildContext modalCtx) {
+    String status,
+    Map<String, dynamic> item,
+    BuildContext modalCtx,
+  ) {
     final isCurrent = item['status'] == status;
     return Expanded(
       child: OutlinedButton(
@@ -195,10 +119,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
           }
         },
         style: OutlinedButton.styleFrom(
-          backgroundColor:
-              isCurrent ? AppColors.primaryGreen : Colors.white,
-          foregroundColor:
-              isCurrent ? Colors.white : AppColors.textPrimary,
+          backgroundColor: isCurrent ? AppColors.primaryGreen : Colors.white,
+          foregroundColor: isCurrent ? Colors.white : AppColors.textPrimary,
           side: BorderSide(
             color: isCurrent ? AppColors.primaryGreen : AppColors.border,
           ),
@@ -273,9 +195,7 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
                     ],
                   ),
                   // Avatar Profile Badge
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
             ),
@@ -333,68 +253,68 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
                     : ListView.separated(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
-                      itemCount: filtered.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final item = filtered[index];
-                        return InkWell(
-                          onTap: () => _showReportDetailModal(item),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cardSubtle,
-                                    borderRadius: BorderRadius.circular(10),
+                        itemCount: filtered.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          return InkWell(
+                            onTap: () => _showReportDetailModal(item),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.cardSubtle,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      item['icon'] as IconData,
+                                      color: AppColors.primaryGreen,
+                                      size: 22,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    item['icon'] as IconData,
-                                    color: AppColors.primaryGreen,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['title'],
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['title'],
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${item['location']} · ${item['time']}',
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          color: AppColors.textSecondary,
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${item['location']} · ${item['time']}',
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                _buildStatusBadge(item['status']),
-                              ],
+                                  _buildStatusBadge(item['status']),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
               ),
             ),
           ],

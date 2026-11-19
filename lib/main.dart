@@ -17,7 +17,9 @@ void main() async {
 
   try {
     await SupabaseConfig.init();
-    debugPrint('Supabase berhasil diinisialisasi: ${SupabaseConfig.supabaseUrl}');
+    debugPrint(
+      'Supabase berhasil diinisialisasi: ${SupabaseConfig.supabaseUrl}',
+    );
   } catch (e) {
     debugPrint('Inisialisasi Supabase (berjalan dalam fallback mode): $e');
   }
@@ -59,21 +61,66 @@ class MyApp extends StatelessWidget {
           ),
         ),
         textTheme: const TextTheme(
-          displayLarge: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          displayMedium: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          displaySmall: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          headlineLarge: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          headlineMedium: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          headlineSmall: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          titleLarge: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          titleMedium: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          titleSmall: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          bodyLarge: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          bodyMedium: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          bodySmall: TextStyle(fontFamily: fontName, color: AppColors.textSecondary),
-          labelLarge: TextStyle(fontFamily: fontName, color: AppColors.textPrimary),
-          labelMedium: TextStyle(fontFamily: fontName, color: AppColors.textSecondary),
-          labelSmall: TextStyle(fontFamily: fontName, color: AppColors.textMuted),
+          displayLarge: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          displayMedium: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          displaySmall: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          headlineLarge: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          titleMedium: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          titleSmall: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          bodySmall: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textSecondary,
+          ),
+          labelLarge: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textPrimary,
+          ),
+          labelMedium: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textSecondary,
+          ),
+          labelSmall: TextStyle(
+            fontFamily: fontName,
+            color: AppColors.textMuted,
+          ),
         ),
       ),
       home: const AdminSplashScreen(),

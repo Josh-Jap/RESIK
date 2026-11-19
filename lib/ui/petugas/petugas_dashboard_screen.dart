@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_avatar_badge.dart';
-import 'petugas_detail_laporan_screen.dart';
+import '../widgets/resik_detail_laporan_screen.dart';
 
 class PetugasDashboardScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -26,6 +26,22 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
+      var user = SupabaseService.instance.currentUser;
+      if (user != null) {
+        final id = user.idUsers;
+        if (id != null) {
+          final fresh = await SupabaseService.instance.getUserById(id);
+          if (fresh != null) user = fresh;
+        }
+        if (user.housing == null && user.idHouse != null) {
+          final h = await SupabaseService.instance.getHousingById(
+            user.idHouse!,
+          );
+          if (h != null) user = user.copyWith(housing: h);
+        }
+        SupabaseService.instance.setCurrentUser(user);
+      }
+
       final list = await SupabaseService.instance.getAllPickupRequests();
       if (mounted) {
         setState(() {
@@ -41,12 +57,18 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = SupabaseService.instance.currentUser;
-    final petugasName = user?.nameUsers.isNotEmpty == true ? user!.nameUsers : 'Petugas';
+    final petugasName = user?.nameUsers.isNotEmpty == true
+        ? user!.nameUsers
+        : 'Petugas';
     final housingName = user?.housing?.nameHouse ?? 'Perumahan';
 
     final pendingCount = _reports.where((r) => r.status == 'pending').length;
-    final progressCount = _reports.where((r) => r.status == 'in_progress').length;
-    final completedCount = _reports.where((r) => r.status == 'completed').length;
+    final progressCount = _reports
+        .where((r) => r.status == 'in_progress')
+        .length;
+    final completedCount = _reports
+        .where((r) => r.status == 'completed')
+        .length;
 
     final latestReport = _reports.isNotEmpty ? _reports.first : null;
 
@@ -58,7 +80,10 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
           color: AppColors.primaryGreen,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -245,7 +270,11 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                 if (_isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryGreen)),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
                   )
                 else if (latestReport == null)
                   Container(
@@ -258,29 +287,41 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                     child: const Center(
                       child: Text(
                         'Belum ada laporan pengaduan sampah.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                   )
                 else
                   InkWell(
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => PetugasDetailLaporanScreen(
-                            reportData: {
-                              'id': latestReport.idPickup,
-                              'title': latestReport.category ?? 'Laporan Sampah',
-                              'location': latestReport.description.contains(' - ')
-                                  ? latestReport.description.split(' - ').first
-                                  : (latestReport.user?.nameUsers ?? 'Area Perumahan'),
-                              'time': 'Baru saja',
-                              'desc': latestReport.description,
-                              'status': latestReport.status,
-                            },
-                          ),
-                        ),
-                      ).then((_) => _loadData());
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (context) => ResikDetailLaporanScreen(
+                                reportData: {
+                                  'id': latestReport.idPickup,
+                                  'title':
+                                      latestReport.category ?? 'Laporan Sampah',
+                                  'location':
+                                      latestReport.description.contains(' - ')
+                                      ? latestReport.description
+                                            .split(' - ')
+                                            .first
+                                      : (latestReport.user?.nameUsers ??
+                                            'Area Perumahan'),
+                                  'time': 'Baru saja',
+                                  'desc': latestReport.description,
+                                  'status': latestReport.status,
+                                  'photo': latestReport.photo,
+                                },
+                                role: 'petugas',
+                              ),
+                            ),
+                          )
+                          .then((_) => _loadData());
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
@@ -333,7 +374,10 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primaryGreen,
                               borderRadius: BorderRadius.circular(8),
@@ -411,11 +455,7 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: AppColors.primaryGreen,
-              size: 24,
-            ),
+            Icon(icon, color: AppColors.primaryGreen, size: 24),
             const SizedBox(height: 6),
             Text(
               label,

@@ -171,7 +171,11 @@ class PetugasDashboardScreen extends StatelessWidget {
                       label: 'Info keuangan',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Status insentif petugas telah sinkron.')),
+                          const SnackBar(
+                            content: Text(
+                              'Status insentif petugas telah sinkron.',
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -312,7 +316,8 @@ class PetugasDashboardScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const PetugasDetailLaporanScreen(),
+                              builder: (context) =>
+                                  const PetugasDetailLaporanScreen(),
                             ),
                           );
                         },
@@ -396,11 +401,7 @@ class PetugasDashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: AppColors.primaryGreen,
-              size: 24,
-            ),
+            Icon(icon, color: AppColors.primaryGreen, size: 24),
             const SizedBox(height: 6),
             Text(
               label,

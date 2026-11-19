@@ -100,9 +100,7 @@ class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
                       ),
                     ],
                   ),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
 
@@ -194,7 +192,9 @@ class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.cardSubtle,
                           borderRadius: BorderRadius.circular(6),

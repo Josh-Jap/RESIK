@@ -43,10 +43,7 @@ class _WargaMainScreenState extends State<WargaMainScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: WargaBottomNav(
         currentIndex: _currentIndex,
         onTap: _onTabSelected,

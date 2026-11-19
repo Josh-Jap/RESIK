@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
@@ -18,6 +19,9 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
   String? _photoName;
   String? _photoSource;
   String? _photoSize;
+  String? _photoPath;
+  Uint8List? _photoBytes;
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -47,12 +51,24 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
     final currentUser = SupabaseService.instance.currentUser;
     final userId = currentUser?.idUsers ?? 1;
 
+    setState(() => _isUploading = true);
+
+    String? photoUrl;
+    if (_hasPhoto && _photoName != null) {
+      photoUrl = await SupabaseService.instance.uploadLaporanPhoto(
+        filePath: _photoPath,
+        fileBytes: _photoBytes,
+        fileName: _photoName!,
+      );
+      photoUrl ??= _photoPath ?? _photoName;
+    }
+
     final newReq = PickupReqModel(
       category: 'Laporan Admin',
       description: '$location - $desc',
       idUsers: userId,
       status: 'pending',
-      photo: _hasPhoto ? _photoName : null,
+      photo: photoUrl,
       pickupDate: DateTime.now(),
     );
 
@@ -60,18 +76,22 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
       await SupabaseService.instance.createPickupRequest(newReq);
 
       if (!mounted) return;
+      setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Laporan berhasil dikirim dan masuk ke daftar pengaduan!'),
+          content: Text(
+            'Laporan berhasil dikirim dan masuk ke daftar pengaduan!',
+          ),
           backgroundColor: AppColors.primaryGreen,
         ),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengirim laporan: $e')),
-      );
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengirim laporan: $e')));
     }
   }
 
@@ -134,7 +154,10 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
 
               // Green Alert Banner
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE2EFE9),
                   borderRadius: BorderRadius.circular(12),
@@ -191,8 +214,11 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                     size: 20,
                   ),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.cancel_outlined,
-                        size: 18, color: AppColors.textMuted),
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
                     onPressed: () => _locationController.clear(),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -267,10 +293,7 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                   ),
                   Text(
                     'Maks. 5 MB',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -282,12 +305,14 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                     hasExistingPhoto: _hasPhoto,
                   );
                   if (result == null) return;
-                  if (result.source == 'HAPUS') {
+                  if (result.source == 'HAPUS' || result.isDeleted) {
                     setState(() {
                       _hasPhoto = false;
                       _photoName = null;
                       _photoSource = null;
                       _photoSize = null;
+                      _photoPath = null;
+                      _photoBytes = null;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Foto berhasil dihapus')),
@@ -298,6 +323,8 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                       _photoName = result.fileName;
                       _photoSource = result.source;
                       _photoSize = result.fileSize;
+                      _photoPath = result.filePath;
+                      _photoBytes = result.fileBytes;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -315,7 +342,9 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _hasPhoto ? AppColors.primaryGreen : AppColors.border,
+                      color: _hasPhoto
+                          ? AppColors.primaryGreen
+                          : AppColors.border,
                       width: _hasPhoto ? 1.5 : 1,
                     ),
                   ),
@@ -333,8 +362,8 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                         child: Icon(
                           _hasPhoto
                               ? (_photoSource == 'Kamera'
-                                  ? Icons.camera_alt_rounded
-                                  : Icons.photo_library_rounded)
+                                    ? Icons.camera_alt_rounded
+                                    : Icons.photo_library_rounded)
                               : Icons.add_a_photo_outlined,
                           color: _hasPhoto
                               ? AppColors.primaryGreen
@@ -397,7 +426,7 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _handleSubmit,
+                  onPressed: _isUploading ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
@@ -406,13 +435,32 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Kirim Laporan',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _isUploading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Mengunggah Foto & Laporan...',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'Kirim Laporan',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
 

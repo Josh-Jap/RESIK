@@ -13,9 +13,12 @@ class AdminBuatLaporanScreen extends StatefulWidget {
 
 class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
   String _selectedProblem = 'Sampah menumpuk';
-  final _locationController = TextEditingController(text: 'Dekat gerbang Blok B');
+  final _locationController = TextEditingController(
+    text: 'Dekat gerbang Blok B',
+  );
   final _descController = TextEditingController(
-    text: 'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
+    text:
+        'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
   );
   bool _hasPhoto = false;
 
@@ -62,16 +65,18 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Laporan berhasil dikirim dan masuk ke daftar pengaduan!'),
+          content: Text(
+            'Laporan berhasil dikirim dan masuk ke daftar pengaduan!',
+          ),
           backgroundColor: AppColors.primaryGreen,
         ),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengirim laporan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengirim laporan: $e')));
     }
   }
 
@@ -134,7 +139,10 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
 
               // Green Alert Banner
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE2EFE9),
                   borderRadius: BorderRadius.circular(12),
@@ -176,7 +184,10 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -186,8 +197,10 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                   child: DropdownButton<String>(
                     value: _selectedProblem,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _problems.map((problem) {
                       return DropdownMenuItem<String>(
                         value: problem,
@@ -246,8 +259,11 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                     size: 20,
                   ),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.cancel_outlined,
-                        size: 18, color: AppColors.textMuted),
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
                     onPressed: () => _locationController.clear(),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -322,10 +338,7 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                   ),
                   Text(
                     'Maks. 5 MB',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -337,9 +350,11 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(_hasPhoto
-                          ? 'Foto terpilih: IMG_20260925.jpg'
-                          : 'Foto dihapus'),
+                      content: Text(
+                        _hasPhoto
+                            ? 'Foto terpilih: IMG_20260925.jpg'
+                            : 'Foto dihapus',
+                      ),
                     ),
                   );
                 },
@@ -349,7 +364,9 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _hasPhoto ? AppColors.primaryGreen : AppColors.border,
+                      color: _hasPhoto
+                          ? AppColors.primaryGreen
+                          : AppColors.border,
                       width: _hasPhoto ? 1.5 : 1,
                     ),
                   ),
@@ -378,7 +395,9 @@ class _AdminBuatLaporanScreenState extends State<AdminBuatLaporanScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _hasPhoto ? 'IMG_20260925.jpg (1.8 MB)' : 'Ambil atau pilih foto',
+                              _hasPhoto
+                                  ? 'IMG_20260925.jpg (1.8 MB)'
+                                  : 'Ambil atau pilih foto',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

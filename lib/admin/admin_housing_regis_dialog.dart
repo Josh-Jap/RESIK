@@ -9,7 +9,10 @@ class AdminHousingRegisDialog extends StatefulWidget {
 
   const AdminHousingRegisDialog({super.key, this.onSaved});
 
-  static Future<HousingModel?> show(BuildContext context, {Function(HousingModel)? onSaved}) {
+  static Future<HousingModel?> show(
+    BuildContext context, {
+    Function(HousingModel)? onSaved,
+  }) {
     return showModalBottomSheet<HousingModel>(
       context: context,
       isScrollControlled: true,
@@ -24,7 +27,8 @@ class AdminHousingRegisDialog extends StatefulWidget {
   }
 
   @override
-  State<AdminHousingRegisDialog> createState() => _AdminHousingRegisDialogState();
+  State<AdminHousingRegisDialog> createState() =>
+      _AdminHousingRegisDialogState();
 }
 
 class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
@@ -137,10 +141,7 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
           const SizedBox(height: 4),
           const Text(
             'Masukkan data perumahan anda.',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
 
           const SizedBox(height: 20),
@@ -257,7 +258,9 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
                 child: SizedBox(
                   height: 46,
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
                       side: const BorderSide(

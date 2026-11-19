@@ -52,9 +52,7 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(3),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(3)),
                 ],
               ),
 
@@ -97,7 +95,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(6),
@@ -129,7 +130,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.badgeDiprosesBg, // #FFF4D8
                             borderRadius: BorderRadius.circular(6),
@@ -157,7 +161,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(4),
@@ -186,7 +193,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
 
                     // Amber Alert Banner (Pengambilan tertunda)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.badgeDiprosesBg, // #FFF4D8
                         borderRadius: BorderRadius.circular(10),
@@ -224,7 +234,8 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const PetugasDetailPengambilanScreen(),
+                              builder: (context) =>
+                                  const PetugasDetailPengambilanScreen(),
                             ),
                           );
                         },
@@ -264,7 +275,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(6),
@@ -292,7 +306,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(4),
@@ -326,14 +343,19 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Tugas shift siang akan dimulai pukul 14.00.'),
+                              content: Text(
+                                'Tugas shift siang akan dimulai pukul 14.00.',
+                              ),
                               backgroundColor: AppColors.primaryGreen,
                             ),
                           );
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryGreen,
-                          side: const BorderSide(color: AppColors.primaryGreen, width: 1.2),
+                          side: const BorderSide(
+                            color: AppColors.primaryGreen,
+                            width: 1.2,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -379,10 +401,34 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
               const SizedBox(height: 10),
 
               // List Jadwal Minggu Ini
-              _buildWeeklyScheduleItem('28', 'Sen', 'Angkut sampah rumah tangga', 'Blok D–F, Rute 2', '08.00'),
-              _buildWeeklyScheduleItem('29', 'Sel', 'Bersihkan taman utama', 'Taman Utama, Blok D', '14.00'),
-              _buildWeeklyScheduleItem('30', 'Rab', 'Angkut sampah daur ulang', 'Area komersil, Rute 4', '09.00'),
-              _buildWeeklyScheduleItem('01', 'Kam', 'Tidak ada pengambilan', 'Hari libur armada', '-'),
+              _buildWeeklyScheduleItem(
+                '28',
+                'Sen',
+                'Angkut sampah rumah tangga',
+                'Blok D–F, Rute 2',
+                '08.00',
+              ),
+              _buildWeeklyScheduleItem(
+                '29',
+                'Sel',
+                'Bersihkan taman utama',
+                'Taman Utama, Blok D',
+                '14.00',
+              ),
+              _buildWeeklyScheduleItem(
+                '30',
+                'Rab',
+                'Angkut sampah daur ulang',
+                'Area komersil, Rute 4',
+                '09.00',
+              ),
+              _buildWeeklyScheduleItem(
+                '01',
+                'Kam',
+                'Tidak ada pengambilan',
+                'Hari libur armada',
+                '-',
+              ),
 
               const SizedBox(height: 20),
             ],
@@ -393,7 +439,12 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
   }
 
   Widget _buildWeeklyScheduleItem(
-      String date, String day, String title, String subtitle, String time) {
+    String date,
+    String day,
+    String title,
+    String subtitle,
+    String time,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),

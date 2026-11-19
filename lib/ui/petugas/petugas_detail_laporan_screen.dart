@@ -14,7 +14,8 @@ class PetugasDetailLaporanScreen extends StatefulWidget {
       _PetugasDetailLaporanScreenState();
 }
 
-class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen> {
+class _PetugasDetailLaporanScreenState
+    extends State<PetugasDetailLaporanScreen> {
   bool _isProcessing = false;
   bool _hasProofPhoto = false;
   String? _proofPhotoName;
@@ -33,7 +34,10 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
     final reportId = widget.reportData?['id'];
     setState(() => _isProcessing = true);
     if (reportId != null) {
-      await SupabaseService.instance.updatePickupStatus(reportId, 'in_progress');
+      await SupabaseService.instance.updatePickupStatus(
+        reportId,
+        'in_progress',
+      );
     }
     if (!mounted) return;
     setState(() {
@@ -42,7 +46,9 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Laporan diterima! Silakan ambil sampah dan unggah bukti selesai.'),
+        content: Text(
+          'Laporan diterima! Silakan ambil sampah dan unggah bukti selesai.',
+        ),
         backgroundColor: AppColors.primaryGreen,
       ),
     );
@@ -61,7 +67,9 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Tugas selesai! Bukti penjemputan sampah berhasil disimpan.'),
+        content: Text(
+          'Tugas selesai! Bukti penjemputan sampah berhasil disimpan.',
+        ),
         backgroundColor: AppColors.primaryGreen,
       ),
     );
@@ -72,7 +80,8 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
   Widget build(BuildContext context) {
     final title = widget.reportData?['title'] ?? 'Laporan Sampah';
     final location = widget.reportData?['location'] ?? 'Area Perumahan';
-    final desc = widget.reportData?['desc'] ?? 'Laporan pengangkutan sampah warga.';
+    final desc =
+        widget.reportData?['desc'] ?? 'Laporan pengangkutan sampah warga.';
     final time = widget.reportData?['time'] ?? 'Baru saja';
 
     final isCompleted = _status == 'completed' || _status == 'selesai';
@@ -157,27 +166,31 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: isCompleted
                                 ? AppColors.badgeSelesaiBg
                                 : (isInProgress
-                                    ? AppColors.badgeDiprosesBg
-                                    : const Color(0xFFE3EDF0)),
+                                      ? AppColors.badgeDiprosesBg
+                                      : const Color(0xFFE3EDF0)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             isCompleted
                                 ? 'Selesai'
-                                : (isInProgress ? 'Sedang Dikerjakan' : 'Menunggu Diterima'),
+                                : (isInProgress
+                                      ? 'Sedang Dikerjakan'
+                                      : 'Menunggu Diterima'),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: isCompleted
                                   ? AppColors.badgeSelesaiText
                                   : (isInProgress
-                                      ? AppColors.badgeDiprosesText
-                                      : const Color(0xFF35697B)),
+                                        ? AppColors.badgeDiprosesText
+                                        : const Color(0xFF35697B)),
                             ),
                           ),
                         ),
@@ -194,7 +207,9 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
-                            isCompleted ? Icons.check_circle_outline_rounded : Icons.delete_outline_rounded,
+                            isCompleted
+                                ? Icons.check_circle_outline_rounded
+                                : Icons.delete_outline_rounded,
                             color: AppColors.primaryGreen,
                             size: 24,
                           ),
@@ -291,7 +306,11 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                           ),
                         ),
                         if (_hasProofPhoto)
-                          const Icon(Icons.check_circle, size: 16, color: AppColors.primaryGreen),
+                          const Icon(
+                            Icons.check_circle,
+                            size: 16,
+                            color: AppColors.primaryGreen,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -315,11 +334,17 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                         height: 140,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: _hasProofPhoto ? const Color(0xFFE8F5E9) : AppColors.cardSubtle,
+                          color: _hasProofPhoto
+                              ? const Color(0xFFE8F5E9)
+                              : AppColors.cardSubtle,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.border,
-                            style: _hasProofPhoto ? BorderStyle.solid : BorderStyle.solid,
+                            color: _hasProofPhoto
+                                ? AppColors.primaryGreen
+                                : AppColors.border,
+                            style: _hasProofPhoto
+                                ? BorderStyle.solid
+                                : BorderStyle.solid,
                           ),
                         ),
                         child: Center(
@@ -327,24 +352,33 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                _hasProofPhoto ? Icons.photo_library_rounded : Icons.add_a_photo_outlined,
+                                _hasProofPhoto
+                                    ? Icons.photo_library_rounded
+                                    : Icons.add_a_photo_outlined,
                                 size: 36,
-                                color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.textSecondary,
+                                color: _hasProofPhoto
+                                    ? AppColors.primaryGreen
+                                    : AppColors.textSecondary,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 _hasProofPhoto
-                                    ? (_proofPhotoName ?? 'Bukti foto terpasang')
+                                    ? (_proofPhotoName ??
+                                          'Bukti foto terpasang')
                                     : 'Klik untuk ambil/unggah foto bukti',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.textPrimary,
+                                  color: _hasProofPhoto
+                                      ? AppColors.primaryGreen
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                _hasProofPhoto ? 'Siap diverifikasi selesai' : 'Gunakan kamera atau galeri untuk bukti fisik',
+                                _hasProofPhoto
+                                    ? 'Siap diverifikasi selesai'
+                                    : 'Gunakan kamera atau galeri untuk bukti fisik',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textMuted,
@@ -370,7 +404,10 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                   height: 48,
                   child: ElevatedButton.icon(
                     onPressed: _isProcessing ? null : _handleAccept,
-                    icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                    icon: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 20,
+                    ),
                     label: const Text(
                       'Terima Laporan',
                       style: TextStyle(

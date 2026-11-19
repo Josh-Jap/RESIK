@@ -133,7 +133,9 @@ class PetugasDetailPengambilanScreen extends StatelessWidget {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.badgeSelesaiBg,
                             borderRadius: BorderRadius.circular(6),
@@ -225,14 +227,19 @@ class PetugasDetailPengambilanScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _buildDetailItem('Deskripsi',
-                        'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.'),
+                    _buildDetailItem(
+                      'Deskripsi',
+                      'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
+                    ),
                     const Divider(color: AppColors.border, height: 16),
                     _buildDetailItem('Lokasi', 'Dekat gerbang Blok B'),
                     const Divider(color: AppColors.border, height: 16),
                     _buildDetailItem('Waktu aduan', '08.15'),
                     const Divider(color: AppColors.border, height: 16),
-                    _buildDetailItem('Wilayah tanggung jawab', 'Blok A–C · Taman Utama'),
+                    _buildDetailItem(
+                      'Wilayah tanggung jawab',
+                      'Blok A–C · Taman Utama',
+                    ),
                   ],
                 ),
               ),
@@ -328,13 +335,18 @@ class PetugasDetailPengambilanScreen extends StatelessWidget {
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Armada siap bergerak menuju lokasi aduan!'),
+                        content: Text(
+                          'Armada siap bergerak menuju lokasi aduan!',
+                        ),
                         backgroundColor: AppColors.primaryGreen,
                       ),
                     );
                     Navigator.of(context).pop();
                   },
-                  icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                  icon: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 18,
+                  ),
                   label: const Text(
                     'Lanjutkan Pengambilan',
                     style: TextStyle(
@@ -362,13 +374,18 @@ class PetugasDetailPengambilanScreen extends StatelessWidget {
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Form pelaporan kendala armada dikirim ke mandur.'),
+                        content: Text(
+                          'Form pelaporan kendala armada dikirim ke mandur.',
+                        ),
                       ),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
-                    side: const BorderSide(color: AppColors.primaryGreen, width: 1.2),
+                    side: const BorderSide(
+                      color: AppColors.primaryGreen,
+                      width: 1.2,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

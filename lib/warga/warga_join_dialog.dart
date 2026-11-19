@@ -6,7 +6,10 @@ class WargaJoinDialog extends StatefulWidget {
 
   const WargaJoinDialog({super.key, this.onJoined});
 
-  static Future<String?> show(BuildContext context, {Function(String)? onJoined}) {
+  static Future<String?> show(
+    BuildContext context, {
+    Function(String)? onJoined,
+  }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -166,7 +169,9 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
                 child: SizedBox(
                   height: 46,
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
                       side: const BorderSide(

@@ -97,9 +97,7 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(4),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(4)),
                 ],
               ),
             ),
@@ -146,7 +144,9 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.cardBg, // #FFFFFF
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border), // #D9DDD7
+                            border: Border.all(
+                              color: AppColors.border,
+                            ), // #D9DDD7
                           ),
                           child: Row(
                             children: [

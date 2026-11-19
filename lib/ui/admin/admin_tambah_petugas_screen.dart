@@ -39,17 +39,23 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama lengkap petugas tidak boleh kosong')),
+        const SnackBar(
+          content: Text('Nama lengkap petugas tidak boleh kosong'),
+        ),
       );
       return;
     }
 
     try {
+      final adminUser = SupabaseService.instance.currentUser;
+      final adminHousingId = adminUser?.idHouse ?? adminUser?.housing?.idHouse;
+
       final createdUser = await SupabaseService.instance.addPetugas(
         name: name,
         phone: phone.isEmpty ? '081200000000' : phone,
         email: email.isEmpty ? null : email,
         password: password.isEmpty ? 'petugas123' : password,
+        idHouse: adminHousingId,
       );
 
       final words = name.split(' ');
@@ -76,7 +82,8 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Petugas "$name" berhasil dibuat! Email: ${createdUser.email} (Sandi: ${password.isEmpty ? "petugas123" : password})'),
+            'Petugas "$name" berhasil dibuat! Email: ${createdUser.email} (Sandi: ${password.isEmpty ? "petugas123" : password})',
+          ),
           backgroundColor: AppColors.primaryGreen,
           duration: const Duration(seconds: 4),
         ),
@@ -84,9 +91,9 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
       Navigator.of(context).pop(newPetugas);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menambahkan petugas: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menambahkan petugas: $e')));
     }
   }
 
@@ -238,10 +245,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               const SizedBox(height: 4),
               const Text(
                 'Gunakan nomor aktif yang dapat dihubungi',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
 
               const SizedBox(height: 16),
@@ -292,10 +296,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               const SizedBox(height: 4),
               const Text(
                 'Kosongkan jika ingin dibuatkan email otomatis oleh sistem',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
 
               const SizedBox(height: 16),
@@ -345,10 +346,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               const SizedBox(height: 4),
               const Text(
                 'Petugas akan menggunakan email & sandi ini untuk masuk',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
 
               const SizedBox(height: 16),
@@ -364,7 +362,10 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),

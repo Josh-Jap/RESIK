@@ -23,13 +23,19 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      idUsers: map['id_users'] != null ? int.tryParse(map['id_users'].toString()) : null,
+      idUsers: map['id_users'] != null
+          ? int.tryParse(map['id_users'].toString())
+          : null,
       nameUsers: map['name_users'] as String? ?? '',
-      phoneNum: map['phone_num'] != null ? num.tryParse(map['phone_num'].toString()) : null,
+      phoneNum: map['phone_num'] != null
+          ? num.tryParse(map['phone_num'].toString())
+          : null,
       email: map['email'] as String?,
       role: map['role'] as String?,
       password: map['password'] as String?,
-      idHouse: map['id_house'] != null ? int.tryParse(map['id_house'].toString()) : null,
+      idHouse: map['id_house'] != null
+          ? int.tryParse(map['id_house'].toString())
+          : null,
       housing: map['Housing'] != null && map['Housing'] is Map<String, dynamic>
           ? HousingModel.fromMap(map['Housing'] as Map<String, dynamic>)
           : null,

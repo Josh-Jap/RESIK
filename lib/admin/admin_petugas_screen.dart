@@ -110,9 +110,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                       ),
                     ],
                   ),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
 
@@ -135,8 +133,10 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                     size: 20,
                     color: AppColors.textSecondary,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -157,8 +157,10 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
@@ -168,8 +170,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor:
-                            AppColors.cardSubtle,
+                        backgroundColor: AppColors.cardSubtle,
                         child: Text(
                           item['initials'],
                           style: const TextStyle(

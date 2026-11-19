@@ -75,8 +75,10 @@ class WargaQrisScreen extends StatelessWidget {
 
               // Status Strip: Amber (normal) or Soft Red (telat)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isLate
                       ? const Color(0xFFFDE8E8) // #FDE8E8 soft red
@@ -145,8 +147,10 @@ class WargaQrisScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
                 child: Column(
                   children: [
                     // Top Card Header: RESIK & QRIS Logo
@@ -227,7 +231,9 @@ class WargaQrisScreen extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF5F3EA),
                         borderRadius: BorderRadius.circular(8),
@@ -283,10 +289,14 @@ class WargaQrisScreen extends StatelessWidget {
               _buildStepItem('1', 'Buka aplikasi bank atau dompet digital.'),
               const SizedBox(height: 6),
               _buildStepItem(
-                  '2', 'Pindai QRIS resmi dari RESIK, bukan kode contoh ini.'),
+                '2',
+                'Pindai QRIS resmi dari RESIK, bukan kode contoh ini.',
+              ),
               const SizedBox(height: 6),
-              _buildStepItem('3',
-                  'Pastikan merchant RESIK dan nominal $amount, lalu konfirmasi.'),
+              _buildStepItem(
+                '3',
+                'Pastikan merchant RESIK dan nominal $amount, lalu konfirmasi.',
+              ),
 
               const SizedBox(height: 20),
 
@@ -401,9 +411,7 @@ class _QrisContohPainter extends CustomPainter {
     for (int r = 0; r < 16; r++) {
       for (int c = 0; c < 16; c++) {
         // Skip corner regions
-        if ((r < 4 && c < 4) ||
-            (r < 4 && c > 11) ||
-            (r > 11 && c < 4)) {
+        if ((r < 4 && c < 4) || (r < 4 && c > 11) || (r > 11 && c < 4)) {
           continue;
         }
 
@@ -414,7 +422,12 @@ class _QrisContohPainter extends CustomPainter {
 
         if ((r * 7 + c * 11 + r * c) % 3 == 0) {
           canvas.drawRect(
-            Rect.fromLTWH(c * modSize, r * modSize, modSize - 1.2, modSize - 1.2),
+            Rect.fromLTWH(
+              c * modSize,
+              r * modSize,
+              modSize - 1.2,
+              modSize - 1.2,
+            ),
             paint,
           );
         }
@@ -441,16 +454,18 @@ class _QrisContohPainter extends CustomPainter {
   }
 
   void _drawFinderPattern(
-      Canvas canvas, double x, double y, double s, Paint paint) {
+    Canvas canvas,
+    double x,
+    double y,
+    double s,
+    Paint paint,
+  ) {
     canvas.drawRect(Rect.fromLTWH(x, y, s, s), paint);
     canvas.drawRect(
       Rect.fromLTWH(x + 5, y + 5, s - 10, s - 10),
       Paint()..color = Colors.white,
     );
-    canvas.drawRect(
-      Rect.fromLTWH(x + 10, y + 10, s - 20, s - 20),
-      paint,
-    );
+    canvas.drawRect(Rect.fromLTWH(x + 10, y + 10, s - 20, s - 20), paint);
   }
 
   @override

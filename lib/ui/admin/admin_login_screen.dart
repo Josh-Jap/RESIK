@@ -70,15 +70,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Row(
               children: const [
                 Icon(Icons.mail_lock_rounded, color: Colors.orange, size: 26),
                 SizedBox(width: 8),
-                Text('Verifikasi Email', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                Text(
+                  'Verifikasi Email',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                ),
               ],
             ),
-            content: Text(cleanMsg, style: const TextStyle(fontSize: 13, height: 1.45)),
+            content: Text(
+              cleanMsg,
+              style: const TextStyle(fontSize: 13, height: 1.45),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -88,19 +96,26 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 onPressed: () async {
                   Navigator.of(ctx).pop();
                   try {
-                    await SupabaseService.instance.resendVerificationEmail(email);
+                    await SupabaseService.instance.resendVerificationEmail(
+                      email,
+                    );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: AppColors.primaryGreen,
-                          content: Text('Email verifikasi baru berhasil dikirimkan ke $email!'),
+                          content: Text(
+                            'Email verifikasi baru berhasil dikirimkan ke $email!',
+                          ),
                         ),
                       );
                     }
                   } catch (err) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('$err'), backgroundColor: Colors.redAccent),
+                        SnackBar(
+                          content: Text('$err'),
+                          backgroundColor: Colors.redAccent,
+                        ),
                       );
                     }
                   }
@@ -117,10 +132,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.redAccent,
-          ),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
         );
       }
     }
@@ -133,7 +145,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(

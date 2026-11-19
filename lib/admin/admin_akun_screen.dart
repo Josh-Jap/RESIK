@@ -38,7 +38,11 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
     super.dispose();
   }
 
-  void _showEditDialog(String title, String currentValue, Function(String) onSave) {
+  void _showEditDialog(
+    String title,
+    String currentValue,
+    Function(String) onSave,
+  ) {
     final controller = TextEditingController(text: currentValue);
     showDialog(
       context: context,
@@ -83,7 +87,9 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
           'Keluar dari Akun',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text('Apakah Anda yakin ingin keluar dari sesi administrator RESIK?'),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari sesi administrator RESIK?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -93,7 +99,9 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const AdminLoginScreen(),
+                ),
                 (route) => false,
               );
             },
@@ -141,7 +149,10 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF266E5A),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
                       ),
                       child: const Center(
                         child: Icon(
@@ -166,7 +177,10 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
@@ -198,14 +212,22 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                     label: 'Nama Lengkap',
                     value: _name,
                     showEdit: true,
-                    onEdit: () => _showEditDialog('Nama Lengkap', _name, (val) => setState(() => _name = val)),
+                    onEdit: () => _showEditDialog(
+                      'Nama Lengkap',
+                      _name,
+                      (val) => setState(() => _name = val),
+                    ),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
                     label: 'Email',
                     value: _email,
                     showEdit: true,
-                    onEdit: () => _showEditDialog('Email', _email, (val) => setState(() => _email = val)),
+                    onEdit: () => _showEditDialog(
+                      'Email',
+                      _email,
+                      (val) => setState(() => _email = val),
+                    ),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
@@ -275,7 +297,10 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                 title: 'KEAMANAN (UBAH PASSWORD)',
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -289,7 +314,10 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(10),
@@ -319,17 +347,27 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'Masukkan password baru',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
                             filled: true,
                             fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                           ),
                         ),
@@ -356,10 +394,7 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                   ),
                   child: const Text(
                     'Keluar dari Akun',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -397,9 +432,7 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );

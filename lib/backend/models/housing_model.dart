@@ -17,11 +17,17 @@ class HousingModel {
 
   factory HousingModel.fromMap(Map<String, dynamic> map) {
     return HousingModel(
-      idHouse: map['id_house'] != null ? int.tryParse(map['id_house'].toString()) : null,
+      idHouse: map['id_house'] != null
+          ? int.tryParse(map['id_house'].toString())
+          : null,
       nameHouse: map['name_house'] as String? ?? '',
       address: map['address'] as String?,
-      houseCode: map['house_code'] != null ? int.tryParse(map['house_code'].toString()) : null,
-      houseNum: map['house_num'] != null ? int.tryParse(map['house_num'].toString()) : null,
+      houseCode: map['house_code'] != null
+          ? int.tryParse(map['house_code'].toString())
+          : null,
+      houseNum: map['house_num'] != null
+          ? int.tryParse(map['house_num'].toString())
+          : null,
       block: map['block'] as String?,
     );
   }

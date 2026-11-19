@@ -28,7 +28,11 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
       {'month': 'Juni', 'subtitle': 'Lunas', 'status': 'lunas'},
       {'month': 'Juli', 'subtitle': 'Terlambat bayar', 'status': 'telat'},
       {'month': 'Agustus', 'subtitle': 'Lunas', 'status': 'lunas'},
-      {'month': 'September', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
+      {
+        'month': 'September',
+        'subtitle': 'Belum bayar',
+        'status': 'belum_bayar',
+      },
       {'month': 'Oktober', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'November', 'subtitle': 'Mendatang', 'status': 'mendatang'},
       {'month': 'Desember', 'subtitle': 'Mendatang', 'status': 'mendatang'},
@@ -271,7 +275,9 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF4D8), // #FFF4D8
                             borderRadius: BorderRadius.circular(12),
@@ -321,7 +327,10 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
 
               // Info Note below Card
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFECEAE0),
                   borderRadius: BorderRadius.circular(12),
@@ -380,7 +389,9 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
                       border: Border.all(color: AppColors.border),
                     ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -408,8 +419,8 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
                                   color: status == 'telat'
                                       ? const Color(0xFFC75C5C)
                                       : status == 'lunas'
-                                          ? AppColors.primaryGreen
-                                          : AppColors.textSecondary,
+                                      ? AppColors.primaryGreen
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],

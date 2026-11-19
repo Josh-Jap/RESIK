@@ -302,7 +302,8 @@ class SupabaseService {
       PickupReqModel(
         idPickup: 1,
         category: 'Sampah menumpuk',
-        description: 'Tumpukan sampah plastik dan rumah tangga menumpuk di depan gang Blok C2 dekat gerbang Blok B.',
+        description:
+            'Tumpukan sampah plastik dan rumah tangga menumpuk di depan gang Blok C2 dekat gerbang Blok B.',
         idUsers: 5,
         user: wargaAdiatma,
         status: 'pending',
@@ -311,7 +312,8 @@ class SupabaseService {
       PickupReqModel(
         idPickup: 2,
         category: 'Tong sampah rusak',
-        description: 'Tutup tong sampah umum pecah dan dasar berlubang di area Taman Utama butuh penggantian.',
+        description:
+            'Tutup tong sampah umum pecah dan dasar berlubang di area Taman Utama butuh penggantian.',
         idUsers: 6,
         user: wargaBudi,
         status: 'in_progress',
@@ -320,7 +322,8 @@ class SupabaseService {
       PickupReqModel(
         idPickup: 3,
         category: 'Daun berserakan',
-        description: 'Ranting dan dedaunan pohon peneduh di Jalan Melati telah disapu dan siap diangkut.',
+        description:
+            'Ranting dan dedaunan pohon peneduh di Jalan Melati telah disapu dan siap diangkut.',
         idUsers: 7,
         user: wargaSiti,
         status: 'completed',
@@ -329,7 +332,8 @@ class SupabaseService {
       PickupReqModel(
         idPickup: 4,
         category: 'Limbah liar di selokan',
-        description: 'Ada pembuangan sisa material semen di saluran air warga Blok B4 yang menyumbat saluran got.',
+        description:
+            'Ada pembuangan sisa material semen di saluran air warga Blok B4 yang menyumbat saluran got.',
         idUsers: 8,
         user: wargaAgus,
         status: 'pending',
@@ -390,7 +394,9 @@ class SupabaseService {
             idUsers: DateTime.now().millisecondsSinceEpoch % 10000,
             nameUsers: cleanRole == 'admin'
                 ? 'Admin Resik'
-                : (cleanRole == 'petugas' ? 'Petugas Kebersihan' : 'Warga Resik'),
+                : (cleanRole == 'petugas'
+                      ? 'Petugas Kebersihan'
+                      : 'Warga Resik'),
             email: cleanEmail,
             role: cleanRole,
             phoneNum: 081200000000,
@@ -417,14 +423,20 @@ class SupabaseService {
       email: email.trim().toLowerCase(),
       role: 'admin',
       password: password,
-      phoneNum: phone != null ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), '')) : 081244556677,
+      phoneNum: phone != null
+          ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''))
+          : 081244556677,
       idHouse: 1,
       housing: _fallbackHousing.first,
     );
 
     if (_client != null) {
       try {
-        final res = await _client!.from('User').insert(newUser.toMap()).select().single();
+        final res = await _client!
+            .from('User')
+            .insert(newUser.toMap())
+            .select()
+            .single();
         final created = UserModel.fromMap(res);
         _currentUser = created;
         return created;
@@ -453,7 +465,9 @@ class SupabaseService {
     if (_client != null) {
       try {
         final response = await _client!.from('Housing').select();
-        return (response as List).map((item) => HousingModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => HousingModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getAllHousing fallback: $e');
       }
@@ -465,7 +479,11 @@ class SupabaseService {
   Future<HousingModel> addHousing(HousingModel housing) async {
     if (_client != null) {
       try {
-        final res = await _client!.from('Housing').insert(housing.toMap()).select().single();
+        final res = await _client!
+            .from('Housing')
+            .insert(housing.toMap())
+            .select()
+            .single();
         final created = HousingModel.fromMap(res);
         _fallbackHousing.add(created);
         return created;
@@ -480,7 +498,9 @@ class SupabaseService {
 
   /// Bergabung ke perumahan dengan kode perumahan
   Future<bool> joinHousingForUser(int userId, dynamic houseCode) async {
-    final codeInt = int.tryParse(houseCode.toString().replaceAll(RegExp(r'[^0-9]'), '')) ?? 102030;
+    final codeInt =
+        int.tryParse(houseCode.toString().replaceAll(RegExp(r'[^0-9]'), '')) ??
+        102030;
     final housing = _fallbackHousing.firstWhere(
       (h) => h.houseCode == codeInt || h.houseCode == 102030,
       orElse: () => _fallbackHousing.first,
@@ -488,7 +508,10 @@ class SupabaseService {
 
     if (_client != null) {
       try {
-        await _client!.from('User').update({'id_house': housing.idHouse}).eq('id_users', userId);
+        await _client!
+            .from('User')
+            .update({'id_house': housing.idHouse})
+            .eq('id_users', userId);
       } catch (e) {
         debugPrint('Supabase joinHousing fallback: $e');
       }
@@ -544,12 +567,16 @@ class SupabaseService {
             .from('User')
             .select('*, Housing(*)')
             .ilike('role', cleanRole);
-        return (response as List).map((item) => UserModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => UserModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getUsersByRole fallback: $e');
       }
     }
-    return _fallbackUsers.where((u) => u.role?.toLowerCase() == cleanRole).toList();
+    return _fallbackUsers
+        .where((u) => u.role?.toLowerCase() == cleanRole)
+        .toList();
   }
 
   /// Menambahkan Petugas baru
@@ -560,8 +587,10 @@ class SupabaseService {
     String? role = 'petugas',
     int? idHouse = 1,
   }) async {
-    final cleanPhone = num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), '')) ?? 081234567890;
-    final generatedEmail = email ?? '${name.toLowerCase().replaceAll(' ', '.')}@resik.id';
+    final cleanPhone =
+        num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), '')) ?? 081234567890;
+    final generatedEmail =
+        email ?? '${name.toLowerCase().replaceAll(' ', '.')}@resik.id';
 
     final newPetugas = UserModel(
       nameUsers: name,
@@ -575,7 +604,11 @@ class SupabaseService {
 
     if (_client != null) {
       try {
-        final res = await _client!.from('User').insert(newPetugas.toMap()).select().single();
+        final res = await _client!
+            .from('User')
+            .insert(newPetugas.toMap())
+            .select()
+            .single();
         final created = UserModel.fromMap(res);
         _fallbackUsers.add(created);
         return created;
@@ -599,7 +632,10 @@ class SupabaseService {
   }) async {
     final updates = <String, dynamic>{};
     if (name != null) updates['name_users'] = name;
-    if (phone != null) updates['phone_num'] = num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (phone != null)
+      updates['phone_num'] = num.tryParse(
+        phone.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
     if (email != null) updates['email'] = email;
     if (password != null) updates['password'] = password;
 
@@ -616,7 +652,9 @@ class SupabaseService {
       final old = _fallbackUsers[idx];
       _fallbackUsers[idx] = old.copyWith(
         nameUsers: name ?? old.nameUsers,
-        phoneNum: phone != null ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), '')) : old.phoneNum,
+        phoneNum: phone != null
+            ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''))
+            : old.phoneNum,
         email: email ?? old.email,
         password: password ?? old.password,
       );
@@ -638,7 +676,9 @@ class SupabaseService {
             .from('Pickup_req')
             .select('*, User(*)')
             .order('pickup_date', ascending: false);
-        return (response as List).map((item) => PickupReqModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => PickupReqModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getAllPickupRequests fallback: $e');
       }
@@ -655,7 +695,9 @@ class SupabaseService {
             .select('*, User(*)')
             .eq('id_users', userId)
             .order('pickup_date', ascending: false);
-        return (response as List).map((item) => PickupReqModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => PickupReqModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getPickupRequestsByUserId fallback: $e');
       }
@@ -667,7 +709,11 @@ class SupabaseService {
   Future<PickupReqModel> createPickupRequest(PickupReqModel request) async {
     if (_client != null) {
       try {
-        final res = await _client!.from('Pickup_req').insert(request.toMap()).select('*, User(*)').single();
+        final res = await _client!
+            .from('Pickup_req')
+            .insert(request.toMap())
+            .select('*, User(*)')
+            .single();
         final created = PickupReqModel.fromMap(res);
         _fallbackPickupRequests.insert(0, created);
         return created;
@@ -699,9 +745,13 @@ class SupabaseService {
       }
     }
 
-    final index = _fallbackPickupRequests.indexWhere((p) => p.idPickup == idPickup);
+    final index = _fallbackPickupRequests.indexWhere(
+      (p) => p.idPickup == idPickup,
+    );
     if (index != -1) {
-      _fallbackPickupRequests[index] = _fallbackPickupRequests[index].copyWith(status: newStatus);
+      _fallbackPickupRequests[index] = _fallbackPickupRequests[index].copyWith(
+        status: newStatus,
+      );
     }
   }
 
@@ -729,7 +779,9 @@ class SupabaseService {
             .from('Payments')
             .select('*, User(*)')
             .order('paid_at', ascending: false);
-        return (response as List).map((item) => PaymentModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => PaymentModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getAllPayments fallback: $e');
       }
@@ -746,7 +798,9 @@ class SupabaseService {
             .select('*, User(*)')
             .eq('id_users', userId)
             .order('paid_at', ascending: false);
-        return (response as List).map((item) => PaymentModel.fromMap(item)).toList();
+        return (response as List)
+            .map((item) => PaymentModel.fromMap(item))
+            .toList();
       } catch (e) {
         debugPrint('Supabase getPaymentsByUserId fallback: $e');
       }
@@ -758,7 +812,11 @@ class SupabaseService {
   Future<PaymentModel> createPayment(PaymentModel payment) async {
     if (_client != null) {
       try {
-        final res = await _client!.from('Payments').insert(payment.toMap()).select('*, User(*)').single();
+        final res = await _client!
+            .from('Payments')
+            .insert(payment.toMap())
+            .select('*, User(*)')
+            .single();
         final created = PaymentModel.fromMap(res);
         _fallbackPayments.insert(0, created);
         return created;
@@ -778,16 +836,26 @@ class SupabaseService {
   }
 
   /// Mendapatkan ringkasan statistik pembayaran untuk bulan tertentu
-  Future<Map<String, dynamic>> getPaymentStats({String month = 'Oktober', int year = 2026}) async {
+  Future<Map<String, dynamic>> getPaymentStats({
+    String month = 'Oktober',
+    int year = 2026,
+  }) async {
     final allPayments = await getAllPayments();
     final allWarga = await getUsersByRole('warga');
 
-    final paidForMonth = allPayments.where((p) => p.month == month && p.year == year).toList();
+    final paidForMonth = allPayments
+        .where((p) => p.month == month && p.year == year)
+        .toList();
     final paidUserIds = paidForMonth.map((p) => p.idUsers).toSet();
 
-    final totalCollected = paidForMonth.fold<int>(0, (sum, p) => sum + (p.amount ?? 0));
+    final totalCollected = paidForMonth.fold<int>(
+      0,
+      (sum, p) => sum + (p.amount ?? 0),
+    );
     final lunasCount = paidUserIds.length;
-    final belumLunasCount = allWarga.where((w) => !paidUserIds.contains(w.idUsers)).length;
+    final belumLunasCount = allWarga
+        .where((w) => !paidUserIds.contains(w.idUsers))
+        .length;
 
     return {
       'totalCollected': totalCollected,

@@ -9,4 +9,5 @@ export 'models/housing_model.dart';
 export 'models/user_model.dart';
 export 'models/payment_model.dart';
 export 'models/pickup_req_model.dart';
+export 'models/schedule_model.dart';
 export 'services/supabase_service.dart';

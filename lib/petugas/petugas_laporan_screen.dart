@@ -107,9 +107,7 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(3),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(3)),
                 ],
               ),
 
@@ -132,8 +130,10 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                     size: 20,
                     color: AppColors.textSecondary,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -160,7 +160,10 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.badgeDiprosesBg, // #FFF4D8
                       borderRadius: BorderRadius.circular(8),
@@ -188,9 +191,8 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => PetugasDetailLaporanScreen(
-                          reportData: item,
-                        ),
+                        builder: (context) =>
+                            PetugasDetailLaporanScreen(reportData: item),
                       ),
                     );
                   },
@@ -257,9 +259,10 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => PetugasDetailLaporanScreen(
-                                    reportData: item,
-                                  ),
+                                  builder: (context) =>
+                                      PetugasDetailLaporanScreen(
+                                        reportData: item,
+                                      ),
                                 ),
                               );
                             },
@@ -271,7 +274,9 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                                   ? AppColors.textPrimary
                                   : Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),

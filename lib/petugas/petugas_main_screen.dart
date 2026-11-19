@@ -39,10 +39,7 @@ class _PetugasMainScreenState extends State<PetugasMainScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: PetugasBottomNav(
         currentIndex: _currentIndex,
         onTap: _onTabSelected,

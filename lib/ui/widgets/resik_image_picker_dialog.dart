@@ -1,24 +1,36 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../theme/app_colors.dart';
 
 class ResikImageResult {
-  final String source; // 'Kamera' atau 'Galeri'
+  final String source; // 'Kamera', 'Galeri', atau 'Dokumen'
   final String fileName;
   final String timestamp;
   final String fileSize;
+  final String? filePath; // Path lokal file asli di HP
+  final Uint8List? fileBytes; // Bytes untuk web/lintas platform
 
   ResikImageResult({
     required this.source,
     required this.fileName,
     required this.timestamp,
     this.fileSize = '1.8 MB',
+    this.filePath,
+    this.fileBytes,
   });
+
+  bool get isDeleted => source == 'HAPUS';
 }
 
 class ResikImagePickerDialog {
+  static final ImagePicker _picker = ImagePicker();
+
   static Future<ResikImageResult?> show(
     BuildContext context, {
     bool hasExistingPhoto = false,
+    bool allowDocuments = true,
   }) async {
     return showModalBottomSheet<ResikImageResult?>(
       context: context,
@@ -53,7 +65,7 @@ class ResikImagePickerDialog {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Pilih Sumber Foto',
+                    'Lampirkan Foto / Dokumen',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
@@ -70,7 +82,7 @@ class ResikImagePickerDialog {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Lampirkan foto tumpukan sampah atau kondisi lingkungan agar petugas mudah menemukan lokasi.',
+                'Gunakan kamera langsung, galeri foto, atau file dokumen dari memori HP Anda.',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
@@ -79,55 +91,162 @@ class ResikImagePickerDialog {
               ),
               const SizedBox(height: 20),
 
-              // Option 1: Kamera
+              // Option 1: Kamera HP Fisik
               _buildOptionTile(
                 ctx: ctx,
                 icon: Icons.camera_alt_rounded,
                 iconBg: AppColors.primaryGreen.withValues(alpha: 0.1),
                 iconColor: AppColors.primaryGreen,
-                title: 'Ambil Foto dari Kamera',
-                subtitle: 'Buka kamera HP dan potret kondisi langsung di tempat',
-                onTap: () {
-                  final now = DateTime.now();
-                  final stamp =
-                      '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-                  Navigator.of(ctx).pop(
-                    ResikImageResult(
-                      source: 'Kamera',
-                      fileName: 'KAMERA_$stamp.jpg',
-                      timestamp:
-                          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                      fileSize: '2.4 MB',
-                    ),
-                  );
+                title: 'Buka Kamera HP',
+                subtitle: 'Potret langsung menggunakan lensa kamera perangkat',
+                onTap: () async {
+                  try {
+                    final XFile? photo = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                      maxWidth: 1600,
+                    );
+                    if (photo != null) {
+                      final now = DateTime.now();
+                      int bytesLength = 0;
+                      try {
+                        bytesLength = await photo.length();
+                      } catch (_) {}
+
+                      final sizeStr = bytesLength > 0
+                          ? '${(bytesLength / (1024 * 1024)).toStringAsFixed(1)} MB'
+                          : '1.5 MB';
+
+                      final timeStr =
+                          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+                      if (ctx.mounted) {
+                        Navigator.of(ctx).pop(
+                          ResikImageResult(
+                            source: 'Kamera',
+                            fileName: photo.name.isNotEmpty
+                                ? photo.name
+                                : 'CAM_${now.millisecondsSinceEpoch}.jpg',
+                            timestamp: timeStr,
+                            fileSize: sizeStr,
+                            filePath: photo.path,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                  } catch (e) {
+                    debugPrint('Error pickImage camera: $e');
+                  }
                 },
               ),
 
               const SizedBox(height: 12),
 
-              // Option 2: Galeri
+              // Option 2: Galeri Foto HP
               _buildOptionTile(
                 ctx: ctx,
                 icon: Icons.photo_library_rounded,
                 iconBg: const Color(0xFFE8F5E9),
                 iconColor: const Color(0xFF2E7D32),
                 title: 'Pilih dari Galeri Foto',
-                subtitle: 'Gunakan gambar yang sudah tersimpan di album perangkat',
-                onTap: () {
-                  final now = DateTime.now();
-                  final stamp =
-                      '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.minute.toString().padLeft(2, '0')}';
-                  Navigator.of(ctx).pop(
-                    ResikImageResult(
-                      source: 'Galeri',
-                      fileName: 'GALERI_sampah_$stamp.jpg',
-                      timestamp:
-                          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                      fileSize: '1.6 MB',
-                    ),
-                  );
+                subtitle: 'Pilih foto yang tersimpan di album perangkat',
+                onTap: () async {
+                  try {
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                      maxWidth: 1600,
+                    );
+                    if (image != null) {
+                      final now = DateTime.now();
+                      int bytesLength = 0;
+                      try {
+                        bytesLength = await image.length();
+                      } catch (_) {}
+
+                      final sizeStr = bytesLength > 0
+                          ? '${(bytesLength / (1024 * 1024)).toStringAsFixed(1)} MB'
+                          : '1.2 MB';
+
+                      final timeStr =
+                          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+                      if (ctx.mounted) {
+                        Navigator.of(ctx).pop(
+                          ResikImageResult(
+                            source: 'Galeri',
+                            fileName: image.name.isNotEmpty
+                                ? image.name
+                                : 'IMG_${now.millisecondsSinceEpoch}.jpg',
+                            timestamp: timeStr,
+                            fileSize: sizeStr,
+                            filePath: image.path,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                  } catch (e) {
+                    debugPrint('Error pickImage gallery: $e');
+                  }
                 },
               ),
+
+              // Option 3: File Dokumen (PDF, Gambar, dll)
+              if (allowDocuments) ...[
+                const SizedBox(height: 12),
+                _buildOptionTile(
+                  ctx: ctx,
+                  icon: Icons.folder_open_rounded,
+                  iconBg: const Color(0xFFE3F2FD),
+                  iconColor: const Color(0xFF1976D2),
+                  title: 'Pilih Berkas / Dokumen',
+                  subtitle: 'Ambil berkas (PDF, DOCX, JPG, PNG) dari memori HP',
+                  onTap: () async {
+                    try {
+                      final file = await FilePicker.pickFile(
+                        type: FileType.custom,
+                        allowedExtensions: [
+                          'jpg',
+                          'jpeg',
+                          'png',
+                          'pdf',
+                          'doc',
+                          'docx',
+                        ],
+                      );
+                      if (file != null) {
+                        final now = DateTime.now();
+                        int bytesLen = file.lengthSync() ?? 0;
+                        if (bytesLen == 0) {
+                          bytesLen = (await file.length()) ?? 0;
+                        }
+                        final sizeStr = bytesLen > 0
+                            ? '${(bytesLen / (1024 * 1024)).toStringAsFixed(1)} MB'
+                            : '1.2 MB';
+                        final timeStr =
+                            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+                        if (ctx.mounted) {
+                          Navigator.of(ctx).pop(
+                            ResikImageResult(
+                              source: 'Dokumen',
+                              fileName: file.name,
+                              timestamp: timeStr,
+                              fileSize: sizeStr,
+                              filePath: file.path,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+                    } catch (e) {
+                      debugPrint('Error pickFile: $e');
+                    }
+                  },
+                ),
+              ],
 
               if (hasExistingPhoto) ...[
                 const SizedBox(height: 12),
@@ -136,8 +255,8 @@ class ResikImagePickerDialog {
                   icon: Icons.delete_outline_rounded,
                   iconBg: const Color(0xFFFFEBEE),
                   iconColor: const Color(0xFFD32F2F),
-                  title: 'Hapus Foto Terpilih',
-                  subtitle: 'Batalkan lampiran foto pada laporan ini',
+                  title: 'Hapus Lampiran Terpilih',
+                  subtitle: 'Batalkan lampiran foto/dokumen pada formulir ini',
                   onTap: () {
                     Navigator.of(ctx).pop(
                       ResikImageResult(
@@ -184,7 +303,7 @@ class ResikImagePickerDialog {
                 color: iconBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: iconColor, size: 24),
+              child: Icon(icon, color: iconColor, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(

@@ -71,9 +71,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
   List<Map<String, dynamic>> get _filteredResidents {
     final query = _searchController.text.trim().toLowerCase();
     return _residents.where((r) {
-      final matchesQuery = query.isEmpty ||
-          (r['name'] as String).toLowerCase().contains(query);
-      final matchesStatus = _selectedStatusFilter == 'Semua' ||
+      final matchesQuery =
+          query.isEmpty || (r['name'] as String).toLowerCase().contains(query);
+      final matchesStatus =
+          _selectedStatusFilter == 'Semua' ||
           r['status'] == _selectedStatusFilter;
       return matchesQuery && matchesStatus;
     }).toList();
@@ -116,9 +117,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                       ),
                     ],
                   ),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
 
@@ -142,7 +141,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
@@ -186,7 +187,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
@@ -270,10 +273,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
               const Text(
                 'Data contoh · 120 warga · Iuran Rp50.000/bulan',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
 
               const SizedBox(height: 18),
@@ -319,8 +319,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                     size: 20,
                     color: AppColors.textSecondary,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -354,8 +356,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -365,8 +369,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor:
-                            AppColors.cardSubtle,
+                        backgroundColor: AppColors.cardSubtle,
                         child: Text(
                           item['initials'],
                           style: const TextStyle(
@@ -414,7 +417,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                           const SizedBox(height: 3),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: isLunas
                                   ? AppColors.badgeSelesaiBg
@@ -444,10 +449,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
               const Center(
                 child: Text(
                   'Menampilkan 6 dari 120 warga · Data contoh',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
               ),
 
@@ -460,7 +462,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Laporan keuangan berhasil diunduh (PDF/Excel)!'),
+                        content: Text(
+                          'Laporan keuangan berhasil diunduh (PDF/Excel)!',
+                        ),
                         backgroundColor: AppColors.primaryGreen,
                       ),
                     );
@@ -468,10 +472,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                   icon: const Icon(Icons.download_rounded, size: 20),
                   label: const Text(
                     'Unduh Laporan Keuangan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
@@ -538,10 +539,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
           const SizedBox(height: 2),
           Text(
             sub,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted,
-            ),
+            style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
           ),
         ],
       ),

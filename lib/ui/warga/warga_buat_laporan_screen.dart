@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
@@ -18,6 +19,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
   String? _photoName;
   String? _photoSource; // 'Kamera' atau 'Galeri'
   String? _photoSize;
+  String? _photoPath;
+  Uint8List? _photoBytes;
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -47,6 +51,19 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
     final user = SupabaseService.instance.currentUser;
     final idUsers = user?.idUsers ?? 5;
 
+    setState(() => _isUploading = true);
+
+    String? photoUrl;
+    if (_hasPhoto && _photoName != null) {
+      photoUrl = await SupabaseService.instance.uploadLaporanPhoto(
+        filePath: _photoPath,
+        fileBytes: _photoBytes,
+        fileName: _photoName!,
+      );
+      // Jika upload storage belum aktif/offline, simpan nama/path lokalnya sebagai fallback
+      photoUrl ??= _photoPath ?? _photoName;
+    }
+
     await SupabaseService.instance.createPickupRequest(
       PickupReqModel(
         idPickup: 0,
@@ -54,12 +71,13 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
         idUsers: idUsers,
         category: 'Laporan Warga',
         status: 'pending',
-        photo: _hasPhoto ? _photoName : null,
+        photo: photoUrl,
         pickupDate: DateTime.now(),
       ),
     );
 
     if (mounted) {
+      setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Laporan Anda berhasil dikirim ke Petugas Pengangkut!'),
@@ -129,7 +147,10 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
 
               // Green Alert Banner
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE2EFE9),
                   borderRadius: BorderRadius.circular(12),
@@ -186,8 +207,11 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                     size: 20,
                   ),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.cancel_outlined,
-                        size: 18, color: AppColors.textMuted),
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
                     onPressed: () => _locationController.clear(),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -262,10 +286,7 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                   ),
                   Text(
                     'Maks. 5 MB',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -277,12 +298,14 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                     hasExistingPhoto: _hasPhoto,
                   );
                   if (result == null) return;
-                  if (result.source == 'HAPUS') {
+                  if (result.source == 'HAPUS' || result.isDeleted) {
                     setState(() {
                       _hasPhoto = false;
                       _photoName = null;
                       _photoSource = null;
                       _photoSize = null;
+                      _photoPath = null;
+                      _photoBytes = null;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Foto berhasil dihapus')),
@@ -293,12 +316,14 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                       _photoName = result.fileName;
                       _photoSource = result.source;
                       _photoSize = result.fileSize;
+                      _photoPath = result.filePath;
+                      _photoBytes = result.fileBytes;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         backgroundColor: AppColors.primaryGreen,
                         content: Text(
-                          'Foto berhasil diambil dari ${result.source}: ${result.fileName}',
+                          'Foto berhasil dipilih dari ${result.source}: ${result.fileName}',
                         ),
                       ),
                     );
@@ -310,7 +335,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                     color: AppColors.cardBg,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _hasPhoto ? AppColors.primaryGreen : AppColors.border,
+                      color: _hasPhoto
+                          ? AppColors.primaryGreen
+                          : AppColors.border,
                       width: _hasPhoto ? 1.5 : 1,
                     ),
                   ),
@@ -328,8 +355,8 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                         child: Icon(
                           _hasPhoto
                               ? (_photoSource == 'Kamera'
-                                  ? Icons.camera_alt_rounded
-                                  : Icons.photo_library_rounded)
+                                    ? Icons.camera_alt_rounded
+                                    : Icons.photo_library_rounded)
                               : Icons.add_a_photo_outlined,
                           color: _hasPhoto
                               ? AppColors.primaryGreen
@@ -392,7 +419,7 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _handleSubmit,
+                  onPressed: _isUploading ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen, // #245C4A
                     foregroundColor: Colors.white,
@@ -401,13 +428,32 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Kirim Laporan',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: _isUploading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Mengunggah Foto & Laporan...',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'Kirim Laporan',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
 

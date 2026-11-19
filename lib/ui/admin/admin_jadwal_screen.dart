@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../../backend/backend.dart';
 import 'admin_tambah_jadwal_screen.dart';
 
 class AdminJadwalScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class AdminJadwalScreen extends StatefulWidget {
 
 class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
   int _selectedDayIndex = 4; // Jum 25
+  bool _isLoading = true;
 
   final List<Map<String, String>> _days = [
     {'day': 'Sen', 'date': '21'},
@@ -25,26 +27,38 @@ class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
     {'day': 'Min', 'date': '27'},
   ];
 
-  final List<Map<String, String>> _schedules = [
-    {
-      'time': '08:00',
-      'area': 'Blok A–C',
-      'type': 'Jenis: Organik',
-      'status': 'Selesai',
-    },
-    {
-      'time': '10:30',
-      'area': 'Blok D–F',
-      'type': 'Jenis: Anorganik',
-      'status': 'Diproses',
-    },
-    {
-      'time': '14:00',
-      'area': 'Taman Utama',
-      'type': 'Jenis: Campuran',
-      'status': 'Baru',
-    },
-  ];
+  List<Map<String, String>> _schedules = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSchedules();
+  }
+
+  Future<void> _loadSchedules() async {
+    setState(() => _isLoading = true);
+    try {
+      final List<ScheduleModel> list = await SupabaseService.instance
+          .getAllSchedules();
+      if (mounted) {
+        setState(() {
+          _schedules = list
+              .map(
+                (ScheduleModel s) => <String, String>{
+                  'time': s.time,
+                  'area': s.area,
+                  'type': s.type,
+                  'status': s.status,
+                },
+              )
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,9 +115,7 @@ class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
                       ),
                     ],
                   ),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
 
@@ -195,7 +207,9 @@ class _AdminJadwalScreenState extends State<AdminJadwalScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.cardSubtle,
                           borderRadius: BorderRadius.circular(6),

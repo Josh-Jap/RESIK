@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../widgets/resik_call_dialog.dart';
 import '../../backend/backend.dart';
 
 class WargaPetugasScreen extends StatefulWidget {
@@ -120,8 +121,10 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                       size: 20,
                       color: AppColors.textSecondary,
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppColors.border),
@@ -139,7 +142,9 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(24.0),
-                      child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
                     ),
                   )
                 else if (list.isEmpty)
@@ -167,8 +172,10 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.cardBg, // #FFFFFF
                         borderRadius: BorderRadius.circular(14),
@@ -222,24 +229,37 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                           ),
                           InkWell(
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Menghubungi $name ($phone)'),
-                                  backgroundColor: AppColors.primaryGreen,
-                                ),
+                              ResikCallDialog.show(
+                                context,
+                                officerName: name,
+                                initialPhone: phone,
                               );
                             },
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              child: const Icon(
-                                Icons.phone_outlined,
-                                size: 18,
-                                color: AppColors.primaryGreen,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(
+                                    Icons.phone_rounded,
+                                    size: 16,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Panggil',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 
@@ -40,7 +41,8 @@ class AdminHousingRegisDialog extends StatefulWidget {
   }
 
   @override
-  State<AdminHousingRegisDialog> createState() => _AdminHousingRegisDialogState();
+  State<AdminHousingRegisDialog> createState() =>
+      _AdminHousingRegisDialogState();
 }
 
 class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
@@ -95,8 +97,18 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
 
     try {
       await _supabaseService.addHousing(newHousing);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_registered_housing', true);
+      await prefs.setString('saved_housing_name', name);
+      if (codeStr.isNotEmpty)
+        await prefs.setString('saved_housing_code', codeStr);
     } catch (e) {
       debugPrint('Simpan ke Supabase gagal atau offline: $e');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_registered_housing', true);
+      await prefs.setString('saved_housing_name', name);
+      if (codeStr.isNotEmpty)
+        await prefs.setString('saved_housing_code', codeStr);
     }
 
     if (!mounted) return;
@@ -153,10 +165,7 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
           const SizedBox(height: 4),
           const Text(
             'Masukkan data perumahan anda.',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
 
           const SizedBox(height: 20),
@@ -274,7 +283,9 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
                   child: SizedBox(
                     height: 46,
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryGreen,
                         side: const BorderSide(
@@ -320,7 +331,9 @@ class _AdminHousingRegisDialogState extends State<AdminHousingRegisDialog> {
                             ),
                           )
                         : Text(
-                            widget.isMandatory ? 'Simpan & Daftarkan Perumahan' : 'Simpan',
+                            widget.isMandatory
+                                ? 'Simpan & Daftarkan Perumahan'
+                                : 'Simpan',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

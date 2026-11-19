@@ -41,7 +41,9 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama lengkap petugas tidak boleh kosong')),
+        const SnackBar(
+          content: Text('Nama lengkap petugas tidak boleh kosong'),
+        ),
       );
       return;
     }
@@ -223,10 +225,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               const SizedBox(height: 4),
               const Text(
                 'Gunakan nomor aktif yang dapat dihubungi',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
 
               const SizedBox(height: 16),
@@ -242,7 +241,10 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -252,15 +254,20 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
                   child: DropdownButton<String>(
                     value: _selectedWilayah,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _wilayahList.map((w) {
                       return DropdownMenuItem<String>(
                         value: w,
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 18, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               w,
@@ -293,7 +300,10 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),

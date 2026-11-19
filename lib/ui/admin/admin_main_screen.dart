@@ -45,10 +45,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: AdminBottomNav(
         currentIndex: _currentIndex,
         onTap: _onTabSelected,

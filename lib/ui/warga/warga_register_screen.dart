@@ -64,10 +64,16 @@ class _WargaRegisterScreenState extends State<WargaRegisterScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: const [
-              Icon(Icons.mark_email_read_rounded, color: AppColors.primaryGreen, size: 28),
+              Icon(
+                Icons.mark_email_read_rounded,
+                color: AppColors.primaryGreen,
+                size: 28,
+              ),
               SizedBox(width: 10),
               Text(
                 'Verifikasi Email',
@@ -105,10 +111,7 @@ class _WargaRegisterScreenState extends State<WargaRegisterScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: Colors.redAccent,
-        ),
+        SnackBar(content: Text('$e'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -120,7 +123,10 @@ class _WargaRegisterScreenState extends State<WargaRegisterScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(

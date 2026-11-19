@@ -82,9 +82,7 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                       ),
                     ],
                   ),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
 
@@ -277,12 +275,21 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                         child: Row(
                           children: [
                             Expanded(
-                              flex: ((current['organikPct'] as double) * 100).toInt(),
-                              child: Container(color: AppColors.accentMint), // #83EBAB
+                              flex: ((current['organikPct'] as double) * 100)
+                                  .toInt(),
+                              child: Container(
+                                color: AppColors.accentMint,
+                              ), // #83EBAB
                             ),
                             Expanded(
-                              flex: (100 - ((current['organikPct'] as double) * 100)).toInt(),
-                              child: Container(color: Colors.white.withValues(alpha: 0.3)),
+                              flex:
+                                  (100 -
+                                          ((current['organikPct'] as double) *
+                                              100))
+                                      .toInt(),
+                              child: Container(
+                                color: Colors.white.withValues(alpha: 0.3),
+                              ),
                             ),
                           ],
                         ),
@@ -324,7 +331,10 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.border), // #D9DDD7
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Column(
                   children: [
                     // Table Header
@@ -374,13 +384,13 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                         ),
                       )
                     else
-                      ...List.generate(
-                        (current['rincian'] as List).length,
-                        (idx) {
-                          final row = current['rincian'][idx];
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
+                      ...List.generate((current['rincian'] as List).length, (
+                        idx,
+                      ) {
+                        final row = current['rincian'][idx];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
                             children: [
                               Expanded(
                                 flex: 4,
@@ -438,8 +448,7 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                             ],
                           ),
                         );
-                      },
-                    ),
+                      }),
                   ],
                 ),
               ),
@@ -476,7 +485,9 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryGreen : Colors.transparent, // #245C4A
+            color: isSelected
+                ? AppColors.primaryGreen
+                : Colors.transparent, // #245C4A
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -485,7 +496,9 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? Colors.white : AppColors.textSecondary, // #7FA68C
+              color: isSelected
+                  ? Colors.white
+                  : AppColors.textSecondary, // #7FA68C
             ),
           ),
         ),

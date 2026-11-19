@@ -23,13 +23,19 @@ class PaymentModel {
 
   factory PaymentModel.fromMap(Map<String, dynamic> map) {
     return PaymentModel(
-      idPayments: map['id_payments'] != null ? int.tryParse(map['id_payments'].toString()) : null,
+      idPayments: map['id_payments'] != null
+          ? int.tryParse(map['id_payments'].toString())
+          : null,
       idUsers: int.tryParse(map['id_users']?.toString() ?? '0') ?? 0,
       qrisReference: map['qris_reference'] as String?,
-      paidAt: map['paid_at'] != null ? DateTime.tryParse(map['paid_at'].toString()) : null,
+      paidAt: map['paid_at'] != null
+          ? DateTime.tryParse(map['paid_at'].toString())
+          : null,
       month: map['month'] as String?,
       year: map['year'] != null ? int.tryParse(map['year'].toString()) : null,
-      amount: map['amount'] != null ? int.tryParse(map['amount'].toString()) : null,
+      amount: map['amount'] != null
+          ? int.tryParse(map['amount'].toString())
+          : null,
       user: map['User'] != null && map['User'] is Map<String, dynamic>
           ? UserModel.fromMap(map['User'] as Map<String, dynamic>)
           : null,
@@ -69,10 +75,23 @@ class PaymentModel {
     if (paidAt == null) return 'Belum ada pembayaran';
     final dt = paidAt!;
     const monthNames = [
-      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
-    final mName = (dt.month >= 1 && dt.month <= 12) ? monthNames[dt.month] : '${dt.month}';
+    final mName = (dt.month >= 1 && dt.month <= 12)
+        ? monthNames[dt.month]
+        : '${dt.month}';
     return '${dt.day} $mName ${dt.year}';
   }
 

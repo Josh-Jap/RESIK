@@ -63,9 +63,7 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(4),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(4)),
                 ],
               ),
 
@@ -89,7 +87,8 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primaryGreen // #245C4A
+                            ? AppColors
+                                  .primaryGreen // #245C4A
                             : AppColors.cardBg,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
@@ -173,7 +172,9 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -196,7 +197,9 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
@@ -250,7 +253,9 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
@@ -322,10 +327,34 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
               const SizedBox(height: 10),
 
               // Weekly schedule items
-              _buildWeeklyScheduleItem('28', 'Sen', 'Angkut sampah rumah tangga', 'Blok A–C, Rute 1', '08.00'),
-              _buildWeeklyScheduleItem('29', 'Sel', 'Sampah daur ulang', 'Blok A–C', '08.00'),
-              _buildWeeklyScheduleItem('30', 'Rab', 'Sampah organik', 'Blok A–C', '07.30'),
-              _buildWeeklyScheduleItem('01', 'Kam', 'Tidak ada pengambilan', 'Hari libur armada', '-'),
+              _buildWeeklyScheduleItem(
+                '28',
+                'Sen',
+                'Angkut sampah rumah tangga',
+                'Blok A–C, Rute 1',
+                '08.00',
+              ),
+              _buildWeeklyScheduleItem(
+                '29',
+                'Sel',
+                'Sampah daur ulang',
+                'Blok A–C',
+                '08.00',
+              ),
+              _buildWeeklyScheduleItem(
+                '30',
+                'Rab',
+                'Sampah organik',
+                'Blok A–C',
+                '07.30',
+              ),
+              _buildWeeklyScheduleItem(
+                '01',
+                'Kam',
+                'Tidak ada pengambilan',
+                'Hari libur armada',
+                '-',
+              ),
 
               const SizedBox(height: 20),
             ],
@@ -336,7 +365,12 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
   }
 
   Widget _buildWeeklyScheduleItem(
-      String date, String day, String title, String subtitle, String time) {
+    String date,
+    String day,
+    String title,
+    String subtitle,
+    String time,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),

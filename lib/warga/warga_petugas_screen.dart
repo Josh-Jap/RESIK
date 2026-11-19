@@ -94,9 +94,7 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(4),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(4)),
                 ],
               ),
 
@@ -119,8 +117,10 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                     size: 20,
                     color: AppColors.textSecondary,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -139,8 +139,10 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                 final item = list[idx];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBg, // #FFFFFF
                     borderRadius: BorderRadius.circular(14),
@@ -196,7 +198,9 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Menghubungi ${item['name']} (${item['phone']})'),
+                              content: Text(
+                                'Menghubungi ${item['name']} (${item['phone']})',
+                              ),
                               backgroundColor: AppColors.primaryGreen,
                             ),
                           );
@@ -205,7 +209,9 @@ class _WargaPetugasScreenState extends State<WargaPetugasScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                            color: AppColors.primaryGreen.withValues(
+                              alpha: 0.1,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(

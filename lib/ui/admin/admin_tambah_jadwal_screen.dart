@@ -9,7 +9,8 @@ class AdminTambahJadwalScreen extends StatefulWidget {
   const AdminTambahJadwalScreen({super.key, this.onScheduleAdded});
 
   @override
-  State<AdminTambahJadwalScreen> createState() => _AdminTambahJadwalScreenState();
+  State<AdminTambahJadwalScreen> createState() =>
+      _AdminTambahJadwalScreenState();
 }
 
 class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
@@ -58,11 +59,13 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
     super.dispose();
   }
 
-  void _saveSchedule() {
+  Future<void> _saveSchedule() async {
     final area = _areaController.text.trim();
     if (area.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lokasi / Wilayah pengangkutan tidak boleh kosong')),
+        const SnackBar(
+          content: Text('Lokasi / Wilayah pengangkutan tidak boleh kosong'),
+        ),
       );
       return;
     }
@@ -72,17 +75,30 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
       'area': area,
       'type': 'Jenis: $_selectedWasteType',
       'status': _selectedStatus,
+      'date': _selectedDate,
+      'officer': _selectedOfficer != 'Pilih petugas pengangkutan'
+          ? _selectedOfficer
+          : null,
+      'notes': _notesController.text.trim(),
     };
+
+    try {
+      await SupabaseService.instance.createSchedule(
+        ScheduleModel.fromMap(newSchedule),
+      );
+    } catch (_) {}
 
     widget.onScheduleAdded?.call(newSchedule);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Jadwal pengangkutan berhasil ditambahkan!'),
-        backgroundColor: AppColors.primaryGreen,
-      ),
-    );
-    Navigator.of(context).pop(newSchedule);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Jadwal pengangkutan berhasil ditambahkan!'),
+          backgroundColor: AppColors.primaryGreen,
+        ),
+      );
+      Navigator.of(context).pop(newSchedule);
+    }
   }
 
   @override
@@ -175,7 +191,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -238,7 +256,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -364,7 +384,10 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -376,15 +399,20 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                         ? _selectedOfficer
                         : _officers.first,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _officers.map((o) {
                       return DropdownMenuItem<String>(
                         value: o,
                         child: Row(
                           children: [
-                            const Icon(Icons.person_outline_rounded,
-                                size: 18, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               o,

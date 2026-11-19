@@ -8,7 +8,8 @@ class AdminTambahJadwalScreen extends StatefulWidget {
   const AdminTambahJadwalScreen({super.key, this.onScheduleAdded});
 
   @override
-  State<AdminTambahJadwalScreen> createState() => _AdminTambahJadwalScreenState();
+  State<AdminTambahJadwalScreen> createState() =>
+      _AdminTambahJadwalScreenState();
 }
 
 class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
@@ -20,7 +21,12 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
   String _selectedStatus = 'Baru';
   final _notesController = TextEditingController();
 
-  final List<String> _areas = ['Blok A–C', 'Blok D–F', 'Taman Utama', 'Area Komersil / Pos'];
+  final List<String> _areas = [
+    'Blok A–C',
+    'Blok D–F',
+    'Taman Utama',
+    'Area Komersil / Pos',
+  ];
   final List<String> _officers = [
     'Pilih petugas pengangkutan',
     'Budi Santoso',
@@ -144,7 +150,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -207,7 +215,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -252,7 +262,10 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -262,15 +275,20 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                   child: DropdownButton<String>(
                     value: _selectedArea,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _areas.map((a) {
                       return DropdownMenuItem<String>(
                         value: a,
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 18, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               a,
@@ -325,7 +343,10 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -335,15 +356,20 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                   child: DropdownButton<String>(
                     value: _selectedOfficer,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _officers.map((o) {
                       return DropdownMenuItem<String>(
                         value: o,
                         child: Row(
                           children: [
-                            const Icon(Icons.person_outline_rounded,
-                                size: 18, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               o,

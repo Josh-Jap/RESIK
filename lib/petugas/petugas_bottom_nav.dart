@@ -72,8 +72,9 @@ class PetugasBottomNav extends StatelessWidget {
                       isSelected ? item.activeIcon : item.icon,
                       size: 24,
                       color: isSelected
-                          ? AppColors.primaryGreen  // #245C4A
-                          : AppColors.textSecondary,// #7FA68C
+                          ? AppColors
+                                .primaryGreen // #245C4A
+                          : AppColors.textSecondary, // #7FA68C
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -82,11 +83,13 @@ class PetugasBottomNav extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected
-                            ? AppColors.primaryGreen  // #245C4A
-                            : AppColors.textSecondary,// #7FA68C
+                            ? AppColors
+                                  .primaryGreen // #245C4A
+                            : AppColors.textSecondary, // #7FA68C
                       ),
                     ),
                   ],

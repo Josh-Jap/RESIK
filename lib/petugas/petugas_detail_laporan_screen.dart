@@ -13,7 +13,8 @@ class PetugasDetailLaporanScreen extends StatefulWidget {
       _PetugasDetailLaporanScreenState();
 }
 
-class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen> {
+class _PetugasDetailLaporanScreenState
+    extends State<PetugasDetailLaporanScreen> {
   bool _isAccepted = false;
 
   @override
@@ -102,7 +103,9 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE3EDF0),
                             borderRadius: BorderRadius.circular(6),
@@ -194,14 +197,19 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _buildDetailItem('Deskripsi',
-                        'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.'),
+                    _buildDetailItem(
+                      'Deskripsi',
+                      'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
+                    ),
                     const Divider(color: AppColors.border, height: 16),
                     _buildDetailItem('Lokasi', location),
                     const Divider(color: AppColors.border, height: 16),
                     _buildDetailItem('Waktu aduan', time),
                     const Divider(color: AppColors.border, height: 16),
-                    _buildDetailItem('Wilayah tanggung jawab', 'Blok A–C · Taman Utama'),
+                    _buildDetailItem(
+                      'Wilayah tanggung jawab',
+                      'Blok A–C · Taman Utama',
+                    ),
                   ],
                 ),
               ),
@@ -244,7 +252,10 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                             Container(
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Color(0xFF8D99AE), Color(0xFF2B2D42)],
+                                  colors: [
+                                    Color(0xFF8D99AE),
+                                    Color(0xFF2B2D42),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -332,17 +343,23 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Laporan diterima! Masuk ke jadwal tugas aktif.'),
+                        content: Text(
+                          'Laporan diterima! Masuk ke jadwal tugas aktif.',
+                        ),
                         backgroundColor: AppColors.primaryGreen,
                       ),
                     );
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => const PetugasDetailPengambilanScreen(),
+                        builder: (context) =>
+                            const PetugasDetailPengambilanScreen(),
                       ),
                     );
                   },
-                  icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                  icon: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 20,
+                  ),
                   label: const Text(
                     'Terima Laporan',
                     style: TextStyle(

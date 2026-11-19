@@ -30,7 +30,11 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
     super.dispose();
   }
 
-  void _showEditDialog(String title, String currentValue, Function(String) onSave) {
+  void _showEditDialog(
+    String title,
+    String currentValue,
+    Function(String) onSave,
+  ) {
     final controller = TextEditingController(text: currentValue);
     showDialog(
       context: context,
@@ -75,7 +79,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
           'Keluar dari Akun',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text('Apakah Anda ingin keluar dari akun Petugas Pengangkut?'),
+        content: const Text(
+          'Apakah Anda ingin keluar dari akun Petugas Pengangkut?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -85,7 +91,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const AdminLoginScreen(),
+                ),
                 (route) => false,
               );
             },
@@ -133,8 +141,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                         color: const Color(0xFF2E6F5B),
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 2),
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
                       ),
                       child: const Center(
                         child: Icon(
@@ -160,7 +169,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
@@ -192,21 +203,33 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                     label: 'Nama Lengkap',
                     value: _name,
                     showEdit: true,
-                    onEdit: () => _showEditDialog('Nama Lengkap', _name, (val) => setState(() => _name = val)),
+                    onEdit: () => _showEditDialog(
+                      'Nama Lengkap',
+                      _name,
+                      (val) => setState(() => _name = val),
+                    ),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
                     label: 'ID Petugas',
                     value: _idPetugas,
                     showEdit: true,
-                    onEdit: () => _showEditDialog('ID Petugas', _idPetugas, (val) => setState(() => _idPetugas = val)),
+                    onEdit: () => _showEditDialog(
+                      'ID Petugas',
+                      _idPetugas,
+                      (val) => setState(() => _idPetugas = val),
+                    ),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
                     label: 'Tim Tugas',
                     value: _team,
                     showEdit: true,
-                    onEdit: () => _showEditDialog('Tim Tugas', _team, (val) => setState(() => _team = val)),
+                    onEdit: () => _showEditDialog(
+                      'Tim Tugas',
+                      _team,
+                      (val) => setState(() => _team = val),
+                    ),
                   ),
                 ],
               ),
@@ -246,13 +269,15 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                   _buildSwitchRow(
                     label: 'Jadwal Harian',
                     value: _notifJadwalHarian,
-                    onChanged: (val) => setState(() => _notifJadwalHarian = val),
+                    onChanged: (val) =>
+                        setState(() => _notifJadwalHarian = val),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildSwitchRow(
                     label: 'Perubahan Rute',
                     value: _notifPerubahanRute,
-                    onChanged: (val) => setState(() => _notifPerubahanRute = val),
+                    onChanged: (val) =>
+                        setState(() => _notifPerubahanRute = val),
                   ),
                 ],
               ),
@@ -264,7 +289,10 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                 title: 'KEAMANAN (UBAH PASSWORD)',
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -278,7 +306,10 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(10),
@@ -308,17 +339,27 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'Masukkan password baru',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
                             filled: true,
                             fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                           ),
                         ),
@@ -345,10 +386,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                   ),
                   child: const Text(
                     'Keluar dari Akun',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -386,9 +424,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );

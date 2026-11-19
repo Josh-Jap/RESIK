@@ -11,9 +11,12 @@ class WargaBuatLaporanScreen extends StatefulWidget {
 
 class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
   String _selectedProblem = 'Sampah menumpuk';
-  final _locationController = TextEditingController(text: 'Dekat gerbang Blok B');
+  final _locationController = TextEditingController(
+    text: 'Dekat gerbang Blok B',
+  );
   final _descController = TextEditingController(
-    text: 'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
+    text:
+        'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
   );
   bool _hasPhoto = false;
 
@@ -108,7 +111,10 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
 
               // Green Alert Banner
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE2EFE9),
                   borderRadius: BorderRadius.circular(12),
@@ -150,7 +156,10 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardBg, // #FFFFFF
                   borderRadius: BorderRadius.circular(12),
@@ -160,8 +169,10 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                   child: DropdownButton<String>(
                     value: _selectedProblem,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                     items: _problems.map((problem) {
                       return DropdownMenuItem<String>(
                         value: problem,
@@ -220,8 +231,11 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                     size: 20,
                   ),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.cancel_outlined,
-                        size: 18, color: AppColors.textMuted),
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
                     onPressed: () => _locationController.clear(),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -296,10 +310,7 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                   ),
                   Text(
                     'Maks. 5 MB',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -311,9 +322,11 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(_hasPhoto
-                          ? 'Foto terpilih: IMG_20260925_WARGA.jpg'
-                          : 'Foto dihapus'),
+                      content: Text(
+                        _hasPhoto
+                            ? 'Foto terpilih: IMG_20260925_WARGA.jpg'
+                            : 'Foto dihapus',
+                      ),
                     ),
                   );
                 },
@@ -323,7 +336,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                     color: AppColors.cardBg,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _hasPhoto ? AppColors.primaryGreen : AppColors.border,
+                      color: _hasPhoto
+                          ? AppColors.primaryGreen
+                          : AppColors.border,
                       width: _hasPhoto ? 1.5 : 1,
                     ),
                   ),
@@ -352,7 +367,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _hasPhoto ? 'IMG_20260925_WARGA.jpg (1.8 MB)' : 'Ambil atau pilih foto',
+                              _hasPhoto
+                                  ? 'IMG_20260925_WARGA.jpg (1.8 MB)'
+                                  : 'Ambil atau pilih foto',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

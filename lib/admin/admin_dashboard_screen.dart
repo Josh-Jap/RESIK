@@ -8,10 +8,7 @@ import 'admin_housing_regis_dialog.dart';
 class AdminDashboardScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
 
-  const AdminDashboardScreen({
-    super.key,
-    this.onNavigateTab,
-  });
+  const AdminDashboardScreen({super.key, this.onNavigateTab});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -37,7 +34,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final reports = await _supabaseService.getAllPickupRequests();
       final petugasList = await _supabaseService.getUsersByRole('petugas');
 
-      final completed = reports.where((r) => r.status?.toLowerCase() == 'completed' || r.status?.toLowerCase() == 'selesai').length;
+      final completed = reports
+          .where(
+            (r) =>
+                r.status?.toLowerCase() == 'completed' ||
+                r.status?.toLowerCase() == 'selesai',
+          )
+          .length;
       final pending = reports.length - completed;
 
       if (mounted) {
@@ -68,7 +71,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           color: AppColors.primaryGreen,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -166,7 +172,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatCol('${_recentReports.length}', 'Laporan aktif'),
+                          _buildStatCol(
+                            '${_recentReports.length}',
+                            'Laporan aktif',
+                          ),
                           Container(
                             width: 1,
                             height: 32,
@@ -290,7 +299,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
                     ),
                   )
                 else if (_recentReports.isEmpty)
@@ -304,7 +315,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: const Center(
                       child: Text(
                         'Belum ada laporan pengaduan masuk.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                   )
@@ -315,17 +329,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                     final badgeBg = isSelesai
                         ? AppColors.badgeSelesaiBg
-                        : (isDiproses ? AppColors.badgeDiprosesBg : AppColors.badgeBaruBg);
+                        : (isDiproses
+                              ? AppColors.badgeDiprosesBg
+                              : AppColors.badgeBaruBg);
                     final badgeTextColor = isSelesai
                         ? AppColors.badgeSelesaiText
-                        : (isDiproses ? AppColors.badgeDiprosesText : AppColors.badgeBaruText);
+                        : (isDiproses
+                              ? AppColors.badgeDiprosesText
+                              : AppColors.badgeBaruText);
 
                     final reporterName = report.user?.nameUsers ?? 'Warga';
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: _buildReportCard(
-                        icon: isSelesai ? Icons.eco_outlined : Icons.delete_outline_rounded,
+                        icon: isSelesai
+                            ? Icons.eco_outlined
+                            : Icons.delete_outline_rounded,
                         title: report.category ?? 'Pengaduan Sampah',
                         subtitle: '$reporterName · ${report.description}',
                         badgeText: report.statusLabel,
@@ -351,7 +371,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -510,11 +533,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 color: AppColors.cardSubtle,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primaryGreen,
-                size: 20,
-              ),
+              child: Icon(icon, color: AppColors.primaryGreen, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

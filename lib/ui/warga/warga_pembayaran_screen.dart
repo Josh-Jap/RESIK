@@ -29,7 +29,11 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
       {'month': 'Juni', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'Juli', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'Agustus', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
-      {'month': 'September', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
+      {
+        'month': 'September',
+        'subtitle': 'Belum bayar',
+        'status': 'belum_bayar',
+      },
       {'month': 'Oktober', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'November', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'Desember', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
@@ -40,7 +44,9 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
   Future<void> _loadUserPayments() async {
     final user = SupabaseService.instance.currentUser;
     if (user?.idUsers != null) {
-      final payments = await SupabaseService.instance.getPaymentsByUserId(user!.idUsers!);
+      final payments = await SupabaseService.instance.getPaymentsByUserId(
+        user!.idUsers!,
+      );
       if (mounted) {
         setState(() {
           for (final p in payments) {
@@ -86,7 +92,8 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
           year: 2026,
           amount: 50000,
           paidAt: DateTime.now(),
-          qrisReference: 'QRIS-2026-${monthName.substring(0, 3).toUpperCase()}-$userId',
+          qrisReference:
+              'QRIS-2026-${monthName.substring(0, 3).toUpperCase()}-$userId',
         ),
       );
 
@@ -249,259 +256,266 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Pembayaran Tahunan',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary, // #252A27
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pembayaran Tahunan',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary, // #252A27
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '12 bulan · $housingName',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary, // #7FA68C
+                          const SizedBox(height: 3),
+                          Text(
+                            '12 bulan · $housingName',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary, // #7FA68C
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(4), // Tab Akun
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-
-              // Green Summary Card (#245C4A)
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen, // #245C4A
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.25),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
+                    const SizedBox(width: 10),
+                    ResikAvatarBadge(
+                      onTap: () => widget.onNavigateTab?.call(4), // Tab Akun
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '2026',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF4D8), // #FFF4D8
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Data contoh',
+
+                const SizedBox(height: 18),
+
+                // Green Summary Card (#245C4A)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen, // #245C4A
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.25),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '2026',
                             style: TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontSize: 11,
+                              color: Colors.white,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Iuran bulanan',
-                      style: TextStyle(
-                        color: Color(0xFFC7EBD6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Rp50.000',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Biaya admin · Rp0',
-                      style: TextStyle(
-                        color: Color(0xFFC7EBD6),
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Info Note below Card
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECEAE0),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 16,
-                      color: AppColors.textSecondary,
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Iuran layanan bulanan untuk pengangkutan dan kebersihan, bukan tarif per kilogram sampah.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textPrimary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // Section: 12 bulan
-              const Text(
-                '12 bulan',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // List of 12 Month Cards
-              Column(
-                children: List.generate(_months.length, (idx) {
-                  final item = _months[idx];
-                  final String month = item['month'];
-                  final String? subtitle = item['subtitle'];
-                  final String status = item['status'];
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              month,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF4D8), // #FFF4D8
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Data contoh',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            if (subtitle != null) ...[
-                              const SizedBox(height: 2),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Iuran bulanan',
+                        style: TextStyle(
+                          color: Color(0xFFC7EBD6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Rp50.000',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Biaya admin · Rp0',
+                        style: TextStyle(
+                          color: Color(0xFFC7EBD6),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Info Note below Card
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECEAE0),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Iuran layanan bulanan untuk pengangkutan dan kebersihan, bukan tarif per kilogram sampah.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textPrimary,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Section: 12 bulan
+                const Text(
+                  '12 bulan',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // List of 12 Month Cards
+                Column(
+                  children: List.generate(_months.length, (idx) {
+                    final item = _months[idx];
+                    final String month = item['month'];
+                    final String? subtitle = item['subtitle'];
+                    final String status = item['status'];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: status == 'telat'
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: status == 'telat'
-                                      ? const Color(0xFFC75C5C)
-                                      : status == 'lunas'
-                                          ? AppColors.primaryGreen
-                                          : AppColors.textSecondary,
+                                month,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
+                              if (subtitle != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  subtitle,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: status == 'telat'
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: status == 'telat'
+                                        ? const Color(0xFFC75C5C)
+                                        : status == 'lunas'
+                                        ? AppColors.primaryGreen
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                        _buildStatusButton(status, () => _onMonthTap(idx)),
-                      ],
-                    ),
-                  );
-                }),
-              ),
+                          ),
+                          _buildStatusButton(status, () => _onMonthTap(idx)),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              // Bottom note
-              Column(
-                children: const [
-                  Text(
-                    'Iuran kebersihan perumahan sebesar Rp 50.000 / bulan.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                // Bottom note
+                Column(
+                  children: const [
+                    Text(
+                      'Iuran kebersihan perumahan sebesar Rp 50.000 / bulan.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Pilih tombol "Belum Bayar" untuk membayar iuran secara instan melalui QRIS.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
+                    SizedBox(height: 3),
+                    Text(
+                      'Pilih tombol "Belum Bayar" untuk membayar iuran secara instan melalui QRIS.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
 
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildStatusButton(String status, VoidCallback onTap) {

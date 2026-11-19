@@ -5,7 +5,8 @@ class PickupReqModel {
   final String description;
   final int idUsers;
   final DateTime? pickupDate;
-  final String? status; // 'pending' (Baru), 'in_progress' (Diproses), 'completed' (Selesai), 'cancelled'
+  final String?
+  status; // 'pending' (Baru), 'in_progress' (Diproses), 'completed' (Selesai), 'cancelled'
   final String? category;
   final String? photo;
   final UserModel? user;
@@ -23,10 +24,14 @@ class PickupReqModel {
 
   factory PickupReqModel.fromMap(Map<String, dynamic> map) {
     return PickupReqModel(
-      idPickup: map['id_pickup'] != null ? int.tryParse(map['id_pickup'].toString()) : null,
+      idPickup: map['id_pickup'] != null
+          ? int.tryParse(map['id_pickup'].toString())
+          : null,
       description: map['description'] as String? ?? '',
       idUsers: int.tryParse(map['id_users']?.toString() ?? '0') ?? 0,
-      pickupDate: map['pickup_date'] != null ? DateTime.tryParse(map['pickup_date'].toString()) : null,
+      pickupDate: map['pickup_date'] != null
+          ? DateTime.tryParse(map['pickup_date'].toString())
+          : null,
       status: map['status'] as String? ?? 'pending',
       category: map['category'] as String?,
       photo: map['photo'] as String?,

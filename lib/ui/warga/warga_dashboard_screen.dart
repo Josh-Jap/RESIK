@@ -58,8 +58,9 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
           ? user.housing!.nameHouse
           : 'lingkungan Anda';
       final userId = user.idUsers ?? 5;
-      final requests =
-          await SupabaseService.instance.getPickupRequestsByUserId(userId);
+      final requests = await SupabaseService.instance.getPickupRequestsByUserId(
+        userId,
+      );
       if (mounted) {
         setState(() {
           _userName = name;
@@ -67,12 +68,10 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
           _totalLaporan = requests.length;
           _recentRequests = requests.take(3).toList();
           _selesai = requests
-              .where((r) =>
-                  r.status == 'completed' || r.status == 'selesai')
+              .where((r) => r.status == 'completed' || r.status == 'selesai')
               .length;
           _diproses = requests
-              .where((r) =>
-                  r.status == 'in_progress' || r.status == 'diproses')
+              .where((r) => r.status == 'in_progress' || r.status == 'diproses')
               .length;
         });
       }
@@ -102,8 +101,10 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
           color: AppColors.primaryGreen,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -229,7 +230,8 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
                         label: 'Buat\nLaporan',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (_) => const WargaBuatLaporanScreen()),
+                            builder: (_) => const WargaBuatLaporanScreen(),
+                          ),
                         ),
                       ),
                     ),
@@ -329,13 +331,13 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
                         badgeBg: isSelesai
                             ? AppColors.badgeSelesaiBg
                             : (isDiproses
-                                ? AppColors.badgeDiprosesBg
-                                : AppColors.badgeBaruBg),
+                                  ? AppColors.badgeDiprosesBg
+                                  : AppColors.badgeBaruBg),
                         badgeTextColor: isSelesai
                             ? AppColors.badgeSelesaiText
                             : (isDiproses
-                                ? AppColors.badgeDiprosesText
-                                : AppColors.badgeBaruText),
+                                  ? AppColors.badgeDiprosesText
+                                  : AppColors.badgeBaruText),
                         onTap: () => widget.onNavigateTab?.call(1),
                       ),
                     );
@@ -351,8 +353,18 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
 
   String _monthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agt',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return months[month - 1];
   }
@@ -372,10 +384,7 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 10.5,
-            color: Color(0xFFC7EBD6),
-          ),
+          style: const TextStyle(fontSize: 10.5, color: Color(0xFFC7EBD6)),
         ),
       ],
     );
@@ -479,8 +488,7 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: badgeBg,
                 borderRadius: BorderRadius.circular(8),

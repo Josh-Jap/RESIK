@@ -6,11 +6,7 @@ class WargaJoinDialog extends StatefulWidget {
   final Function(String)? onJoined;
   final bool isMandatory;
 
-  const WargaJoinDialog({
-    super.key,
-    this.onJoined,
-    this.isMandatory = false,
-  });
+  const WargaJoinDialog({super.key, this.onJoined, this.isMandatory = false});
 
   static Future<String?> show(
     BuildContext context, {
@@ -29,10 +25,7 @@ class WargaJoinDialog extends StatefulWidget {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: WargaJoinDialog(
-            onJoined: onJoined,
-            isMandatory: isMandatory,
-          ),
+          child: WargaJoinDialog(onJoined: onJoined, isMandatory: isMandatory),
         ),
       ),
     );
@@ -84,7 +77,10 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
 
     final user = SupabaseService.instance.currentUser;
     final userId = user?.idUsers ?? 5;
-    final success = await SupabaseService.instance.joinHousingForUser(userId, code);
+    final success = await SupabaseService.instance.joinHousingForUser(
+      userId,
+      code,
+    );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -246,7 +242,9 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
                   child: SizedBox(
                     height: 46,
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryGreen,
                         side: const BorderSide(
@@ -292,7 +290,9 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
                             ),
                           )
                         : Text(
-                            widget.isMandatory ? 'Gabung & Lanjutkan' : 'Gabung',
+                            widget.isMandatory
+                                ? 'Gabung & Lanjutkan'
+                                : 'Gabung',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

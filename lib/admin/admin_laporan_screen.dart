@@ -27,7 +27,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
       'time': '10 mnt lalu',
       'status': 'Baru',
       'icon': Icons.delete_outline_rounded,
-      'desc': 'Tumpukan sampah plastik dan rumah tangga menumpuk di depan gang Blok C2.',
+      'desc':
+          'Tumpukan sampah plastik dan rumah tangga menumpuk di depan gang Blok C2.',
     },
     {
       'id': 2,
@@ -36,7 +37,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
       'time': '35 mnt lalu',
       'status': 'Diproses',
       'icon': Icons.delete_outline_rounded,
-      'desc': 'Tutup tong sampah umum pecah dan dasar berlubang butuh penggantian.',
+      'desc':
+          'Tutup tong sampah umum pecah dan dasar berlubang butuh penggantian.',
     },
     {
       'id': 3,
@@ -45,7 +47,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
       'time': '1 jam lalu',
       'status': 'Selesai',
       'icon': Icons.eco_outlined,
-      'desc': 'Ranting dan dedaunan pohon peneduh telah disapu dan diangkut petugas.',
+      'desc':
+          'Ranting dan dedaunan pohon peneduh telah disapu dan diangkut petugas.',
     },
     {
       'id': 4,
@@ -79,7 +82,9 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
               'location': reporter,
               'time': 'Baru saja',
               'status': statusLabel,
-              'icon': statusLabel == 'Selesai' ? Icons.eco_outlined : Icons.delete_outline_rounded,
+              'icon': statusLabel == 'Selesai'
+                  ? Icons.eco_outlined
+                  : Icons.delete_outline_rounded,
               'desc': item.description,
             });
           }
@@ -121,9 +126,7 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           decoration: const BoxDecoration(
             color: AppColors.scaffoldBg,
@@ -337,7 +340,10 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
   }
 
   Widget _buildStatusActionButton(
-      String status, Map<String, dynamic> item, BuildContext modalCtx) {
+    String status,
+    Map<String, dynamic> item,
+    BuildContext modalCtx,
+  ) {
     final isCurrent = item['status'] == status;
     return Expanded(
       child: OutlinedButton(
@@ -363,10 +369,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
           }
         },
         style: OutlinedButton.styleFrom(
-          backgroundColor:
-              isCurrent ? AppColors.primaryGreen : Colors.white,
-          foregroundColor:
-              isCurrent ? Colors.white : AppColors.textPrimary,
+          backgroundColor: isCurrent ? AppColors.primaryGreen : Colors.white,
+          foregroundColor: isCurrent ? Colors.white : AppColors.textPrimary,
           side: BorderSide(
             color: isCurrent ? AppColors.primaryGreen : AppColors.border,
           ),
@@ -440,9 +444,7 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
                     ],
                   ),
                   // Avatar Profile Badge
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(5),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(5)),
                 ],
               ),
             ),

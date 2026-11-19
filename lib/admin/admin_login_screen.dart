@@ -108,7 +108,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -297,12 +300,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Fitur reset password telah dikirim ke email admin.'),
+                            content: Text(
+                              'Fitur reset password telah dikirim ke email admin.',
+                            ),
                           ),
                         );
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 0,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),

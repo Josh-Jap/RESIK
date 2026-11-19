@@ -87,7 +87,8 @@ class AdminBottomNav extends StatelessWidget {
                       isSelected ? item.activeIcon : item.icon,
                       size: 22,
                       color: isSelected
-                          ? AppColors.primaryGreen  // #245C4A
+                          ? AppColors
+                                .primaryGreen // #245C4A
                           : AppColors.primaryMuted, // #7FA68C
                     ),
                     const SizedBox(height: 3),
@@ -97,10 +98,12 @@ class AdminBottomNav extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected
-                            ? AppColors.primaryGreen  // #245C4A
+                            ? AppColors
+                                  .primaryGreen // #245C4A
                             : AppColors.primaryMuted, // #7FA68C
                       ),
                     ),

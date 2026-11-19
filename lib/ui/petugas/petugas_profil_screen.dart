@@ -65,7 +65,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
     final currentUser = user;
     if (currentUser != null && mounted) {
       setState(() {
-        _name = currentUser.nameUsers.isNotEmpty ? currentUser.nameUsers : 'Petugas';
+        _name = currentUser.nameUsers.isNotEmpty
+            ? currentUser.nameUsers
+            : 'Petugas';
         _idPetugas = 'PTG-${currentUser.idUsers ?? 204}';
         _housingName = currentUser.housing?.nameHouse ?? 'Belum Ditentukan';
         _emergencyContact = currentUser.housing?.address ?? 'Wilayah Perumahan';
@@ -79,7 +81,11 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
     super.dispose();
   }
 
-  void _showEditDialog(String title, String currentValue, Function(String) onSave) {
+  void _showEditDialog(
+    String title,
+    String currentValue,
+    Function(String) onSave,
+  ) {
     final controller = TextEditingController(text: currentValue);
     showDialog(
       context: context,
@@ -124,7 +130,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
           'Keluar dari Akun',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text('Apakah Anda ingin keluar dari akun Petugas Pengangkut?'),
+        content: const Text(
+          'Apakah Anda ingin keluar dari akun Petugas Pengangkut?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -137,7 +145,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
               if (ctx.mounted) Navigator.of(ctx).pop();
               if (mounted) {
                 rootNavigator.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const AdminLoginScreen(),
+                  ),
                   (route) => false,
                 );
               }
@@ -165,77 +175,243 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Profile Banner Card (Dark Green #245C4A)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen, // #245C4A
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E6F5B),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 2),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Profile Banner Card (Dark Green #245C4A)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen, // #245C4A
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryGreen.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      child: Center(
-                        child: Text(
-                          _name.trim().isNotEmpty
-                              ? (_name.trim().split(' ').length > 1
-                                  ? '${_name.trim().split(' ')[0][0]}${_name.trim().split(' ')[1][0]}'.toUpperCase()
-                                  : _name.trim()[0].toUpperCase())
-                              : 'P',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E6F5B),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _name.trim().isNotEmpty
+                                ? (_name.trim().split(' ').length > 1
+                                      ? '${_name.trim().split(' ')[0][0]}${_name.trim().split(' ')[1][0]}'
+                                            .toUpperCase()
+                                      : _name.trim()[0].toUpperCase())
+                                : 'P',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'PETUGAS PENGANGKUT',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                  color: AppColors.accentMint, // #83EBAB
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // SECTION 1: INFO PEKERJAAN
+                _buildSectionCard(
+                  title: 'INFO PEKERJAAN',
+                  children: [
+                    _buildInfoRow(
+                      label: 'Nama Lengkap',
+                      value: _name,
+                      showEdit: true,
+                      onEdit: () => _showEditDialog(
+                        'Nama Lengkap',
+                        _name,
+                        (val) => setState(() => _name = val),
+                      ),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
+                    const Divider(color: AppColors.border, height: 1),
+                    _buildInfoRow(
+                      label: 'ID Petugas',
+                      value: _idPetugas,
+                      showEdit: false,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // SECTION 2: INFO PERUMAHAN
+                _buildSectionCard(
+                  title: 'INFO PERUMAHAN',
+                  children: [
+                    _buildInfoRow(
+                      label: 'Perumahan',
+                      value: _housingName,
+                      showEdit: false,
+                    ),
+                    const Divider(color: AppColors.border, height: 1),
+                    _buildInfoRow(
+                      label: 'Wilayah / Alamat',
+                      value: _emergencyContact,
+                      showEdit: false,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // SECTION 3: PENGATURAN NOTIFIKASI
+                _buildSectionCard(
+                  title: 'PENGATURAN NOTIFIKASI',
+                  children: [
+                    _buildSwitchRow(
+                      label: 'Laporan Baru',
+                      value: _notifLaporanBaru,
+                      onChanged: (val) =>
+                          setState(() => _notifLaporanBaru = val),
+                    ),
+                    const Divider(color: AppColors.border, height: 1),
+                    _buildSwitchRow(
+                      label: 'Jadwal Harian',
+                      value: _notifJadwalHarian,
+                      onChanged: (val) =>
+                          setState(() => _notifJadwalHarian = val),
+                    ),
+                    const Divider(color: AppColors.border, height: 1),
+                    _buildSwitchRow(
+                      label: 'Perubahan Rute',
+                      value: _notifPerubahanRute,
+                      onChanged: (val) =>
+                          setState(() => _notifPerubahanRute = val),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // SECTION 4: KEAMANAN (UBAH PASSWORD)
+                _buildSectionCard(
+                  title: 'KEAMANAN (UBAH PASSWORD)',
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                          const Text(
+                            'Password Lama',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
+                              color: AppColors.cardSubtle,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: const Text(
-                              'PETUGAS PENGANGKUT',
+                              '••••••••',
                               style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.8,
-                                color: AppColors.accentMint, // #83EBAB
+                                letterSpacing: 2,
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Password Baru',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _newPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Masukkan password baru',
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
                               ),
                             ),
                           ),
@@ -244,178 +420,39 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // SECTION 1: INFO PEKERJAAN
-              _buildSectionCard(
-                title: 'INFO PEKERJAAN',
-                children: [
-                  _buildInfoRow(
-                    label: 'Nama Lengkap',
-                    value: _name,
-                    showEdit: true,
-                    onEdit: () => _showEditDialog('Nama Lengkap', _name, (val) => setState(() => _name = val)),
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  _buildInfoRow(
-                    label: 'ID Petugas',
-                    value: _idPetugas,
-                    showEdit: false,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // SECTION 2: INFO PERUMAHAN
-              _buildSectionCard(
-                title: 'INFO PERUMAHAN',
-                children: [
-                  _buildInfoRow(
-                    label: 'Perumahan',
-                    value: _housingName,
-                    showEdit: false,
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  _buildInfoRow(
-                    label: 'Wilayah / Alamat',
-                    value: _emergencyContact,
-                    showEdit: false,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // SECTION 3: PENGATURAN NOTIFIKASI
-              _buildSectionCard(
-                title: 'PENGATURAN NOTIFIKASI',
-                children: [
-                  _buildSwitchRow(
-                    label: 'Laporan Baru',
-                    value: _notifLaporanBaru,
-                    onChanged: (val) => setState(() => _notifLaporanBaru = val),
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  _buildSwitchRow(
-                    label: 'Jadwal Harian',
-                    value: _notifJadwalHarian,
-                    onChanged: (val) => setState(() => _notifJadwalHarian = val),
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  _buildSwitchRow(
-                    label: 'Perubahan Rute',
-                    value: _notifPerubahanRute,
-                    onChanged: (val) => setState(() => _notifPerubahanRute = val),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // SECTION 4: KEAMANAN (UBAH PASSWORD)
-              _buildSectionCard(
-                title: 'KEAMANAN (UBAH PASSWORD)',
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Password Lama',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardSubtle,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: const Text(
-                            '••••••••',
-                            style: TextStyle(
-                              letterSpacing: 2,
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Password Baru',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: _newPasswordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            hintText: 'Masukkan password baru',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
-                            ),
-                          ),
-                        ),
-                      ],
+                // Button: Keluar dari Akun
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _handleLogout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger, // #C75C5C
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Button: Keluar dari Akun
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _handleLogout,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.danger, // #C75C5C
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Keluar dari Akun',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                    child: const Text(
+                      'Keluar dari Akun',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildSectionCard({
@@ -443,9 +480,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );

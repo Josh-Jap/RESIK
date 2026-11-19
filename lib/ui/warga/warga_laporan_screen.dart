@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../widgets/resik_detail_laporan_screen.dart';
 import '../../backend/backend.dart';
 import 'warga_buat_laporan_screen.dart';
 
@@ -27,32 +28,27 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
   Future<void> _loadReports() async {
     setState(() => _isLoading = true);
     final user = SupabaseService.instance.currentUser;
-    final userId = user?.idUsers ?? 5;
-    final reqs = await SupabaseService.instance.getPickupRequestsByUserId(userId);
+    final userId = user?.idUsers;
+
+    List<PickupReqModel> reqs;
+    if (userId != null && userId > 0) {
+      reqs = await SupabaseService.instance.getPickupRequestsByUserId(userId);
+    } else {
+      reqs = await SupabaseService.instance.getAllPickupRequests();
+    }
 
     if (mounted) {
       setState(() {
         _reports = reqs.map((r) {
-          String statusLabel;
-          final s = (r.status ?? 'baru').toLowerCase();
-          switch (s) {
-            case 'baru':
-              statusLabel = 'Baru';
-              break;
-            case 'diproses':
-              statusLabel = 'Diproses';
-              break;
-            case 'selesai':
-              statusLabel = 'Selesai';
-              break;
-            default:
-              statusLabel = r.status ?? 'Baru';
-          }
           return {
+            'id': r.idPickup,
             'title': r.tipePickup ?? 'Laporan',
             'location': r.lokasi ?? '-',
+            'desc': r.description,
             'time': r.tanggalPickup ?? '-',
-            'status': statusLabel,
+            'status': r.status ?? 'pending',
+            'statusLabel': r.statusLabel,
+            'photo': r.photo,
             'icon': Icons.delete_outline_rounded,
           };
         }).toList();
@@ -63,7 +59,7 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
 
   List<Map<String, dynamic>> get _filtered {
     if (_selectedFilter == 'Semua') return _reports;
-    return _reports.where((r) => r['status'] == _selectedFilter).toList();
+    return _reports.where((r) => r['statusLabel'] == _selectedFilter).toList();
   }
 
   @override
@@ -121,9 +117,7 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ResikAvatarBadge(
-                    onTap: () => widget.onNavigateTab?.call(4),
-                  ),
+                  ResikAvatarBadge(onTap: () => widget.onNavigateTab?.call(4)),
                 ],
               ),
             ),
@@ -148,81 +142,111 @@ class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
 
             // List of Reports
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
-                  : list.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Tidak ada laporan status "$_selectedFilter"',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
+              child: RefreshIndicator(
+                onRefresh: _loadReports,
+                color: AppColors.primaryGreen,
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryGreen,
+                        ),
+                      )
+                    : list.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.2,
+                          ),
+                          Center(
+                            child: Text(
+                              'Tidak ada laporan status "$_selectedFilter"',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadReports,
-                          color: AppColors.primaryGreen,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
-                            itemCount: list.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final item = list[index];
-                              return Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.cardBg, // #FFFFFF
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.border), // #D9DDD7
+                        ],
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                        itemCount: list.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final item = list[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ResikDetailLaporanScreen(
+                                    reportData: item,
+                                    role: 'warga',
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.cardSubtle,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        item['icon'] as IconData,
-                                        color: AppColors.primaryGreen,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item['title'],
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.textPrimary, // #252A27
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            '${item['location']} · ${item['time']}',
-                                            style: const TextStyle(
-                                              fontSize: 11.5,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    _buildStatusBadge(item['status']),
-                                  ],
-                                ),
-                              );
+                              ).then((_) => _loadReports());
                             },
-                          ),
-                        ),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBg, // #FFFFFF
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.border,
+                                ), // #D9DDD7
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.cardSubtle,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      item['icon'] as IconData,
+                                      color: AppColors.primaryGreen,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['title'],
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color:
+                                                AppColors.textPrimary, // #252A27
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${item['location']} · ${item['time']}',
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildStatusBadge(item['statusLabel'] ?? item['status']),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ),
           ],
         ),

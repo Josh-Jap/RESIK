@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_avatar_badge.dart';
@@ -7,10 +8,7 @@ import 'admin_housing_regis_dialog.dart';
 class AdminDashboardScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
 
-  const AdminDashboardScreen({
-    super.key,
-    this.onNavigateTab,
-  });
+  const AdminDashboardScreen({super.key, this.onNavigateTab});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -23,7 +21,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _completedCount = 0;
   int _pendingCount = 0;
   bool _isLoading = false;
-  static bool _hasPromptedHousingOnLogin = false;
 
   @override
   void initState() {
@@ -35,15 +32,63 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _promptHousingIfFirstTime() async {
-    final user = _supabaseService.currentUser;
-    // Pop-up hanya muncul jika Admin belum mengatur perumahan.
-    // Jika sudah diisi, TIDAK BISA pop-up lagi kecuali lewat menu Profil Admin!
-    if (user?.housing == null && user?.idHouse == null) {
+    // 1. Cek penyimpanan lokal permanen (SharedPreferences)
+    final prefs = await SharedPreferences.getInstance();
+    final hasRegisteredLocally =
+        prefs.getBool('has_registered_housing') ?? false;
+    final savedName = prefs.getString('saved_housing_name');
+    final savedCode = prefs.getString('saved_housing_code');
+
+    var user = _supabaseService.currentUser;
+
+    // Jika di lokal sudah pernah diisi, pasang ke user session jika belum ada
+    if (hasRegisteredLocally &&
+        savedName != null &&
+        user != null &&
+        user.housing == null) {
+      user = user.copyWith(
+        housing: HousingModel(
+          idHouse: user.idHouse ?? 1,
+          nameHouse: savedName,
+          houseCode: int.tryParse(savedCode ?? '123456'),
+          address: 'Wilayah Perumahan',
+        ),
+      );
+      _supabaseService.setCurrentUser(user);
+      if (mounted) setState(() {});
+    }
+
+    // 2. Cek jika perumahan belum tersinkron di session tetapi sudah ada di Supabase
+    if (user != null && (user.housing == null || user.idHouse == null)) {
+      if (user.idUsers != null) {
+        final fresh = await _supabaseService.getUserById(user.idUsers!);
+        if (fresh != null) user = fresh;
+      }
+      if (user.housing == null && user.idHouse != null) {
+        final h = await _supabaseService.getHousingById(user.idHouse!);
+        if (h != null) user = user.copyWith(housing: h);
+      }
+      _supabaseService.setCurrentUser(user);
+    }
+
+    // 3. Jika sudah pernah diisi (baik di DB Supabase maupun di lokal HP/Laptop), JANGAN munculkan dialog lagi!
+    if (hasRegisteredLocally ||
+        (user?.housing != null || user?.idHouse != null)) {
+      return;
+    }
+
+    // Pop-up HANYA muncul jika benar-benar pertama kali install dan belum pernah diisi
+    if (mounted) {
       final res = await AdminHousingRegisDialog.show(
         context,
-        isMandatory: true, // Wajib diisi! Tidak bisa ditutup tanpa isi data
+        isMandatory: true, // Wajib diisi saat pertama kali install/setup
       );
       if (res != null && mounted) {
+        await prefs.setBool('has_registered_housing', true);
+        await prefs.setString('saved_housing_name', res.nameHouse);
+        if (res.houseCode != null) {
+          await prefs.setString('saved_housing_code', res.houseCode.toString());
+        }
         await _loadDashboardData();
         setState(() {});
       }
@@ -56,7 +101,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final reports = await _supabaseService.getAllPickupRequests();
       final petugasList = await _supabaseService.getUsersByRole('petugas');
 
-      final completed = reports.where((r) => r.status?.toLowerCase() == 'completed' || r.status?.toLowerCase() == 'selesai').length;
+      final completed = reports
+          .where(
+            (r) =>
+                r.status?.toLowerCase() == 'completed' ||
+                r.status?.toLowerCase() == 'selesai',
+          )
+          .length;
       final pending = reports.length - completed;
 
       if (mounted) {
@@ -89,7 +140,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           color: AppColors.primaryGreen,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -187,7 +241,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatCol('${_recentReports.length}', 'Laporan aktif'),
+                          _buildStatCol(
+                            '${_recentReports.length}',
+                            'Laporan aktif',
+                          ),
                           Container(
                             width: 1,
                             height: 32,
@@ -311,7 +368,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
                     ),
                   )
                 else if (_recentReports.isEmpty)
@@ -325,7 +384,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: const Center(
                       child: Text(
                         'Belum ada laporan pengaduan masuk.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                   )
@@ -336,17 +398,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                     final badgeBg = isSelesai
                         ? AppColors.badgeSelesaiBg
-                        : (isDiproses ? AppColors.badgeDiprosesBg : AppColors.badgeBaruBg);
+                        : (isDiproses
+                              ? AppColors.badgeDiprosesBg
+                              : AppColors.badgeBaruBg);
                     final badgeTextColor = isSelesai
                         ? AppColors.badgeSelesaiText
-                        : (isDiproses ? AppColors.badgeDiprosesText : AppColors.badgeBaruText);
+                        : (isDiproses
+                              ? AppColors.badgeDiprosesText
+                              : AppColors.badgeBaruText);
 
                     final reporterName = report.user?.nameUsers ?? 'Warga';
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: _buildReportCard(
-                        icon: isSelesai ? Icons.eco_outlined : Icons.delete_outline_rounded,
+                        icon: isSelesai
+                            ? Icons.eco_outlined
+                            : Icons.delete_outline_rounded,
                         title: report.category ?? 'Pengaduan Sampah',
                         subtitle: '$reporterName · ${report.description}',
                         badgeText: report.statusLabel,
@@ -372,7 +440,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -531,11 +602,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 color: AppColors.cardSubtle,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primaryGreen,
-                size: 20,
-              ),
+              child: Icon(icon, color: AppColors.primaryGreen, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

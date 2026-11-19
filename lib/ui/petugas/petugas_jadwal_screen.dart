@@ -40,7 +40,9 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
   @override
   Widget build(BuildContext context) {
     final activeTasks = _tasks.where((t) => t.status != 'completed').toList();
-    final completedTasks = _tasks.where((t) => t.status == 'completed').toList();
+    final completedTasks = _tasks
+        .where((t) => t.status == 'completed')
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -127,7 +129,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.cardSubtle,
                               borderRadius: BorderRadius.circular(6),
@@ -149,7 +154,9 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
                           child: Center(
-                            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryGreen,
+                            ),
                           ),
                         )
                       else if (activeTasks.isEmpty)
@@ -173,17 +180,22 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isProgress ? const Color(0xFFFBF8EE) : Colors.white,
+                              color: isProgress
+                                  ? const Color(0xFFFBF8EE)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isProgress ? const Color(0xFFE2C97D) : AppColors.border,
+                                color: isProgress
+                                    ? const Color(0xFFE2C97D)
+                                    : AppColors.border,
                               ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Text(
@@ -196,17 +208,26 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isProgress ? AppColors.badgeDiprosesBg : const Color(0xFFE3EDF0),
+                                        color: isProgress
+                                            ? AppColors.badgeDiprosesBg
+                                            : const Color(0xFFE3EDF0),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        isProgress ? 'Sedang Dikerjakan' : 'Perlu Diambil',
+                                        isProgress
+                                            ? 'Sedang Dikerjakan'
+                                            : 'Perlu Diambil',
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
-                                          color: isProgress ? AppColors.badgeDiprosesText : const Color(0xFF35697B),
+                                          color: isProgress
+                                              ? AppColors.badgeDiprosesText
+                                              : const Color(0xFF35697B),
                                         ),
                                       ),
                                     ),
@@ -286,7 +307,11 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, color: AppColors.primaryGreen, size: 20),
+                          const Icon(
+                            Icons.check_circle_outline,
+                            color: AppColors.primaryGreen,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(

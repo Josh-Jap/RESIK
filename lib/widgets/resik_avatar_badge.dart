@@ -5,11 +5,7 @@ class ResikAvatarBadge extends StatelessWidget {
   final double size;
   final VoidCallback? onTap;
 
-  const ResikAvatarBadge({
-    super.key,
-    this.size = 40,
-    this.onTap,
-  });
+  const ResikAvatarBadge({super.key, this.size = 40, this.onTap});
 
   @override
   Widget build(BuildContext context) {

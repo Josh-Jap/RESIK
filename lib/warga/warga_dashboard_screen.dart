@@ -179,7 +179,8 @@ class WargaDashboardScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const WargaBuatLaporanScreen(),
+                            builder: (context) =>
+                                const WargaBuatLaporanScreen(),
                           ),
                         );
                       },
@@ -374,11 +375,7 @@ class WargaDashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: AppColors.primaryGreen,
-              size: 24,
-            ),
+            Icon(icon, color: AppColors.primaryGreen, size: 24),
             const SizedBox(height: 6),
             Text(
               label,
@@ -434,7 +431,9 @@ class WargaDashboardScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: isDone ? AppColors.badgeSelesaiBg : AppColors.badgeDiprosesBg,
+            color: isDone
+                ? AppColors.badgeSelesaiBg
+                : AppColors.badgeDiprosesBg,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -442,7 +441,9 @@ class WargaDashboardScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isDone ? AppColors.badgeSelesaiText : AppColors.badgeDiprosesText,
+              color: isDone
+                  ? AppColors.badgeSelesaiText
+                  : AppColors.badgeDiprosesText,
             ),
           ),
         ),
@@ -478,11 +479,7 @@ class WargaDashboardScreen extends StatelessWidget {
                 color: AppColors.cardSubtle,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primaryGreen,
-                size: 20,
-              ),
+              child: Icon(icon, color: AppColors.primaryGreen, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
