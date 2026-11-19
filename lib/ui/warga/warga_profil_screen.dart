@@ -38,6 +38,30 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
 
   Future<void> _loadProfileData() async {
     var user = SupabaseService.instance.currentUser;
+
+    // Refresh data user terbaru dari Supabase
+    if (user != null) {
+      if (user.idUsers != null) {
+        final fresh = await SupabaseService.instance.getUserById(user.idUsers!);
+        if (fresh != null) {
+          user = fresh;
+          SupabaseService.instance.setCurrentUser(user);
+        }
+      } else if (user.email != null) {
+        try {
+          final res = await SupabaseConfig.client
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', user.email!)
+              .maybeSingle();
+          if (res != null) {
+            user = UserModel.fromMap(res);
+            SupabaseService.instance.setCurrentUser(user);
+          }
+        } catch (_) {}
+      }
+    }
+
     if (user != null && user.housing == null && user.idHouse != null) {
       final h = await SupabaseService.instance.getHousingById(user.idHouse!);
       if (h != null) {
@@ -151,9 +175,13 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg, // #F5F3EA
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _loadProfileData,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Top Profile Card (Dark Green #245C4A)
@@ -419,7 +447,8 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSectionCard({
@@ -528,7 +557,7 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
           ),
           Switch(
             value: value,
-            activeColor: AppColors.primaryGreen,
+            activeThumbColor: AppColors.primaryGreen,
             onChanged: onChanged,
           ),
         ],

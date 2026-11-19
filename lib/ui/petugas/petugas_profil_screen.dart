@@ -15,7 +15,6 @@ class PetugasProfilScreen extends StatefulWidget {
 class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
   late String _name;
   late String _idPetugas;
-  late String _team;
   late String _housingName;
   late String _emergencyContact;
 
@@ -28,12 +27,50 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
   @override
   void initState() {
     super.initState();
-    final user = SupabaseService.instance.currentUser;
-    _name = user?.nameUsers ?? 'Budi Santoso';
-    _idPetugas = 'PTG-${user?.idUsers ?? 204}';
-    _team = 'Tim Pengangkut 1';
-    _housingName = user?.housing?.nameHouse ?? 'Griya Asri Permai';
-    _emergencyContact = user?.displayPhone ?? '0812-3456-7890';
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    var user = SupabaseService.instance.currentUser;
+    if (user != null) {
+      if (user.idUsers != null) {
+        final fresh = await SupabaseService.instance.getUserById(user.idUsers!);
+        if (fresh != null) {
+          user = fresh;
+          SupabaseService.instance.setCurrentUser(user);
+        }
+      } else if (user.email != null) {
+        try {
+          final res = await SupabaseConfig.client
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', user.email!)
+              .maybeSingle();
+          if (res != null) {
+            user = UserModel.fromMap(res);
+            SupabaseService.instance.setCurrentUser(user);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (user != null && user.housing == null && user.idHouse != null) {
+      final h = await SupabaseService.instance.getHousingById(user.idHouse!);
+      if (h != null) {
+        user = user.copyWith(housing: h);
+        SupabaseService.instance.setCurrentUser(user);
+      }
+    }
+
+    final currentUser = user;
+    if (currentUser != null && mounted) {
+      setState(() {
+        _name = currentUser.nameUsers.isNotEmpty ? currentUser.nameUsers : 'Petugas';
+        _idPetugas = 'PTG-${currentUser.idUsers ?? 204}';
+        _housingName = currentUser.housing?.nameHouse ?? 'Belum Ditentukan';
+        _emergencyContact = currentUser.housing?.address ?? 'Wilayah Perumahan';
+      });
+    }
   }
 
   @override
@@ -95,10 +132,11 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              final rootNavigator = Navigator.of(context);
               await SupabaseService.instance.logout();
               if (ctx.mounted) Navigator.of(ctx).pop();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
+              if (mounted) {
+                rootNavigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
                   (route) => false,
                 );
@@ -120,9 +158,13 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg, // #F5F3EA
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _loadProfileData,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Top Profile Banner Card (Dark Green #245C4A)
@@ -220,15 +262,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                   _buildInfoRow(
                     label: 'ID Petugas',
                     value: _idPetugas,
-                    showEdit: true,
-                    onEdit: () => _showEditDialog('ID Petugas', _idPetugas, (val) => setState(() => _idPetugas = val)),
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  _buildInfoRow(
-                    label: 'Tim Tugas',
-                    value: _team,
-                    showEdit: true,
-                    onEdit: () => _showEditDialog('Tim Tugas', _team, (val) => setState(() => _team = val)),
+                    showEdit: false,
                   ),
                 ],
               ),
@@ -246,7 +280,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
-                    label: 'Kontak Darurat Mandur',
+                    label: 'Wilayah / Alamat',
                     value: _emergencyContact,
                     showEdit: false,
                   ),
@@ -380,7 +414,8 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSectionCard({
@@ -489,7 +524,7 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
           ),
           Switch(
             value: value,
-            activeColor: AppColors.primaryGreen,
+            activeThumbColor: AppColors.primaryGreen,
             onChanged: onChanged,
           ),
         ],

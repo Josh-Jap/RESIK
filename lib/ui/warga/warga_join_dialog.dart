@@ -43,7 +43,7 @@ class WargaJoinDialog extends StatefulWidget {
 }
 
 class _WargaJoinDialogState extends State<WargaJoinDialog> {
-  final _codeController = TextEditingController(text: 'GAP-RESIK-10');
+  final _codeController = TextEditingController();
   String? _suggestedInfo;
   bool _isLoading = false;
 
@@ -58,10 +58,8 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
       final list = await SupabaseService.instance.getAllHousing();
       if (list.isNotEmpty && mounted) {
         final latest = list.last;
-        final code = latest.houseCode?.toString() ?? 'GAP-RESIK-10';
         setState(() {
-          _suggestedInfo = '${latest.nameHouse} (Kode: $code)';
-          _codeController.text = code;
+          _suggestedInfo = '${latest.nameHouse} (Minta kode ke Pengurus/Admin)';
         });
       }
     } catch (_) {}
@@ -141,7 +139,7 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
 
           // Title & Subtitle
           const Text(
-            'Join Perumahan',
+            'Gabung Perumahan',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -150,7 +148,7 @@ class _WargaJoinDialogState extends State<WargaJoinDialog> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Masukkan kode perumahan untuk bergabung dan mulai mengawasi kebersihan di perumahan tempat tinggal Anda.',
+            'Silakan masukkan kode perumahan yang dibagikan oleh Admin/Pengurus perumahan Anda (misal dari grup WhatsApp).',
             style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary, // #7FA68C

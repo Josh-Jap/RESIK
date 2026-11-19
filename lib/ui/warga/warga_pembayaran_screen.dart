@@ -31,8 +31,8 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
       {'month': 'Agustus', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'September', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'Oktober', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
-      {'month': 'November', 'subtitle': 'Mendatang', 'status': 'mendatang'},
-      {'month': 'Desember', 'subtitle': 'Mendatang', 'status': 'mendatang'},
+      {'month': 'November', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
+      {'month': 'Desember', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
     ];
     _loadUserPayments();
   }
@@ -242,9 +242,13 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg, // #F5F3EA
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _loadUserPayments,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
@@ -471,39 +475,21 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
               Column(
                 children: const [
                   Text(
-                    'Tagihan contoh · Simulasi pembayaran',
+                    'Iuran kebersihan perumahan sebesar Rp 50.000 / bulan.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Agustus lunas · Dibayar 5 Sep 2026',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'September belum dibayar · Jatuh tempo 10 Oktober 2026',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Juli telat · Harap segera diselesaikan',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFC75C5C),
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Pilih tombol "Belum Bayar" untuk membayar iuran secara instan melalui QRIS.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -514,7 +500,8 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildStatusButton(String status, VoidCallback onTap) {

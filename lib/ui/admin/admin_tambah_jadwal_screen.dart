@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../../backend/backend.dart';
 
 class AdminTambahJadwalScreen extends StatefulWidget {
   final Function(Map<String, dynamic>)? onScheduleAdded;
@@ -14,31 +15,61 @@ class AdminTambahJadwalScreen extends StatefulWidget {
 class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
   String _selectedDate = 'Pilih tanggal';
   String _selectedTime = '08:00';
-  String _selectedArea = 'Blok A–C';
+  final _areaController = TextEditingController();
   String _selectedWasteType = 'Organik';
   String _selectedOfficer = 'Pilih petugas pengangkutan';
   String _selectedStatus = 'Baru';
   final _notesController = TextEditingController();
 
-  final List<String> _areas = ['Blok A–C', 'Blok D–F', 'Taman Utama', 'Area Komersil / Pos'];
-  final List<String> _officers = [
-    'Pilih petugas pengangkutan',
-    'Budi Santoso',
-    'Siti Aminah',
-    'Joko Widodo',
-    'Tim Regu Pagi (4 Orang)',
-  ];
+  final List<String> _officers = ['Pilih petugas pengangkutan'];
+  bool _isLoadingOfficers = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPetugasList();
+  }
+
+  Future<void> _fetchPetugasList() async {
+    try {
+      final list = await SupabaseService.instance.getUsersByRole('petugas');
+      if (mounted) {
+        setState(() {
+          _officers.clear();
+          _officers.add('Pilih petugas pengangkutan');
+          for (final p in list) {
+            final name = p.nameUsers.trim();
+            if (name.isNotEmpty && !_officers.contains(name)) {
+              _officers.add(name);
+            }
+          }
+          _isLoadingOfficers = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingOfficers = false);
+    }
+  }
 
   @override
   void dispose() {
+    _areaController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   void _saveSchedule() {
+    final area = _areaController.text.trim();
+    if (area.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lokasi / Wilayah pengangkutan tidak boleh kosong')),
+      );
+      return;
+    }
+
     final newSchedule = {
       'time': _selectedTime,
-      'area': _selectedArea,
+      'area': area,
       'type': 'Jenis: $_selectedWasteType',
       'status': _selectedStatus,
     };
@@ -241,9 +272,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
 
               const SizedBox(height: 16),
 
-              // Wilayah pengangkutan
+              // Wilayah pengangkutan (Text Input)
               const Text(
-                'Wilayah pengangkutan',
+                'Wilayah / Lokasi pengangkutan',
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -251,41 +282,35 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedArea,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
-                    items: _areas.map((a) {
-                      return DropdownMenuItem<String>(
-                        value: a,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 18, color: AppColors.textSecondary),
-                            const SizedBox(width: 10),
-                            Text(
-                              a,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedArea = val);
-                    },
+              TextField(
+                controller: _areaController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Contoh: Blok A-C / Seluruh Komplek / Depan Pos',
+                  hintStyle: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textMuted,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primaryGreen,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -315,13 +340,27 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
               const SizedBox(height: 16),
 
               // Petugas
-              const Text(
-                'Petugas',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Petugas',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (_isLoadingOfficers)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 6),
               Container(
@@ -333,7 +372,9 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedOfficer,
+                    value: _officers.contains(_selectedOfficer)
+                        ? _selectedOfficer
+                        : _officers.first,
                     isExpanded: true,
                     icon: const Icon(Icons.keyboard_arrow_down_rounded,
                         color: AppColors.textSecondary),

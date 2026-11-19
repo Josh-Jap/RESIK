@@ -93,9 +93,13 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _fetchPaymentData,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
@@ -496,7 +500,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildMetricCard({

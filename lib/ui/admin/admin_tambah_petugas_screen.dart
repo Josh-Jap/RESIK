@@ -19,16 +19,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _notesController = TextEditingController();
-  String _selectedWilayah = 'Blok A–C';
   bool _isActive = true;
-
-  final List<String> _wilayahList = [
-    'Blok A–C',
-    'Blok D–F',
-    'Taman Utama',
-    'TPS Induk Griya Asri',
-    'Seluruh Wilayah Perumahan',
-  ];
 
   @override
   void dispose() {
@@ -75,7 +66,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
         'initials': initials,
         'name': name,
         'phone': phone.isEmpty ? '0812-0000-0000' : phone,
-        'area': 'Wilayah: $_selectedWilayah',
+        'area': 'Petugas Kebersihan',
         'isActive': _isActive,
       };
 
@@ -362,57 +353,6 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
 
               const SizedBox(height: 16),
 
-              // Field: Wilayah tugas
-              const Text(
-                'Wilayah tugas',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedWilayah,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
-                    items: _wilayahList.map((w) {
-                      return DropdownMenuItem<String>(
-                        value: w,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 18, color: AppColors.textSecondary),
-                            const SizedBox(width: 10),
-                            Text(
-                              w,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedWilayah = val);
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               // Status petugas
               const Text(
                 'Status petugas',
@@ -456,7 +396,7 @@ class _AdminTambahPetugasScreenState extends State<AdminTambahPetugasScreen> {
                     ),
                     Switch(
                       value: _isActive,
-                      activeColor: AppColors.primaryGreen,
+                      activeThumbColor: AppColors.primaryGreen,
                       onChanged: (val) => setState(() => _isActive = val),
                     ),
                   ],

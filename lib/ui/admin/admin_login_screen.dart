@@ -60,12 +60,69 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+
+      final errorMsg = e.toString().replaceFirst('Exception: ', '');
+
+      if (errorMsg.startsWith('EMAIL_NOT_CONFIRMED:')) {
+        final cleanMsg = errorMsg.replaceFirst('EMAIL_NOT_CONFIRMED:', '');
+        final email = _emailController.text.trim();
+
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: const [
+                Icon(Icons.mail_lock_rounded, color: Colors.orange, size: 26),
+                SizedBox(width: 8),
+                Text('Verifikasi Email', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+              ],
+            ),
+            content: Text(cleanMsg, style: const TextStyle(fontSize: 13, height: 1.45)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Tutup'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  try {
+                    await SupabaseService.instance.resendVerificationEmail(email);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: AppColors.primaryGreen,
+                          content: Text('Email verifikasi baru berhasil dikirimkan ke $email!'),
+                        ),
+                      );
+                    }
+                  } catch (err) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('$err'), backgroundColor: Colors.redAccent),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.send_rounded, size: 16),
+                label: const Text('Kirim Ulang Email'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 

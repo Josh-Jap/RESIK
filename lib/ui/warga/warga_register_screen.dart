@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_logo.dart';
-import 'warga_main_screen.dart';
 
 class WargaRegisterScreen extends StatefulWidget {
   const WargaRegisterScreen({super.key});
@@ -59,16 +58,48 @@ class _WargaRegisterScreenState extends State<WargaRegisterScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendaftaran Warga berhasil! Selamat datang di RESIK.'),
-          backgroundColor: AppColors.primaryGreen,
-        ),
-      );
+      final userEmail = _emailController.text.trim();
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const WargaMainScreen()),
-        (route) => false,
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.mark_email_read_rounded, color: AppColors.primaryGreen, size: 28),
+              SizedBox(width: 10),
+              Text(
+                'Verifikasi Email',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            'Pendaftaran berhasil!\n\nTautan verifikasi telah dikirimkan ke email:\n$userEmail\n\nSilakan periksa kotak masuk atau folder spam email Anda dan klik tautan konfirmasi Supabase untuk mengaktifkan akun Anda sebelum masuk.',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop(); // Kembali ke halaman Login
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Buka Halaman Masuk'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       if (!mounted) return;

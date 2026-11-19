@@ -17,45 +17,8 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
   final SupabaseService _supabaseService = SupabaseService();
   String _selectedFilter = 'Semua';
 
-  // Default initial reports matching the design
-  final List<Map<String, dynamic>> _reports = [
-    {
-      'id': 1,
-      'title': 'Sampah menumpuk',
-      'location': 'Blok C2',
-      'time': '10 mnt lalu',
-      'status': 'Baru',
-      'icon': Icons.delete_outline_rounded,
-      'desc': 'Tumpukan sampah plastik dan rumah tangga menumpuk di depan gang Blok C2.',
-    },
-    {
-      'id': 2,
-      'title': 'Tong sampah rusak',
-      'location': 'Taman Utama',
-      'time': '35 mnt lalu',
-      'status': 'Diproses',
-      'icon': Icons.delete_outline_rounded,
-      'desc': 'Tutup tong sampah umum pecah dan dasar berlubang butuh penggantian.',
-    },
-    {
-      'id': 3,
-      'title': 'Daun berserakan',
-      'location': 'Jalan Melati',
-      'time': '1 jam lalu',
-      'status': 'Selesai',
-      'icon': Icons.eco_outlined,
-      'desc': 'Ranting dan dedaunan pohon peneduh telah disapu dan diangkut petugas.',
-    },
-    {
-      'id': 4,
-      'title': 'Limbah liar di selokan',
-      'location': 'Blok B4',
-      'time': '2 jam lalu',
-      'status': 'Baru',
-      'icon': Icons.warning_amber_rounded,
-      'desc': 'Ada pembuangan limbah sisa material semen di saluran air warga.',
-    },
-  ];
+  // Daftar laporan dinamis murni dari database (kosong saat awal pasang)
+  final List<Map<String, dynamic>> _reports = [];
 
   @override
   void initState() {
@@ -337,29 +300,39 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
 
             // List of Reports
             Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+              child: RefreshIndicator(
+                onRefresh: _fetchSupabaseReports,
+                color: AppColors.primaryGreen,
+                child: filtered.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          Icon(
-                            Icons.assignment_turned_in_outlined,
-                            size: 48,
-                            color: AppColors.textMuted,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Tidak ada laporan status "$_selectedFilter"',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.assignment_turned_in_outlined,
+                                  size: 48,
+                                  color: AppColors.textMuted,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Tidak ada laporan status "$_selectedFilter"',
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
                       itemCount: filtered.length,
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 8),
@@ -422,6 +395,7 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
                         );
                       },
                     ),
+              ),
             ),
           ],
         ),

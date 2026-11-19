@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../contracts/i_auth_service.dart';
@@ -44,6 +46,12 @@ class SupabaseService
     _currentUser = user;
   }
 
+  /// Helper untuk hashing password menggunakan SHA-256
+  static String hashPassword(String password) {
+    final bytes = utf8.encode(password.trim());
+    return sha256.convert(bytes).toString();
+  }
+
   // ==========================================
   // IN-MEMORY FALLBACK REPOSITORY (OFFLINE-SAFE)
   // ==========================================
@@ -81,8 +89,52 @@ class SupabaseService
     String? role,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
+    final cleanPassword = password.trim();
 
-    // 1. Coba lewat Supabase jika online
+    // 1. Cek akun khusus Admin bawaan terlebih dahulu
+    // Supaya Admin selalu bisa masuk langsung tanpa hambatan auth/verifikasi email
+    if (cleanEmail == 'admin@resik.id') {
+      if (cleanPassword != 'admin123') {
+        throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
+      }
+      var adminUser = _fallbackUsers.firstWhere(
+        (u) => u.email?.toLowerCase() == 'admin@resik.id',
+        orElse: () => UserModel(
+          idUsers: 1,
+          nameUsers: 'Admin RESIK',
+          email: 'admin@resik.id',
+          role: 'admin',
+          password: 'admin123',
+        ),
+      );
+
+      // Cek apakah di database Supabase Admin sudah punya data profil / perumahan
+      if (_client != null) {
+        try {
+          final res = await _client!
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', 'admin@resik.id')
+              .maybeSingle();
+          if (res != null) {
+            adminUser = UserModel.fromMap(res);
+          }
+        } catch (dbErr) {
+          debugPrint('Supabase fetch admin User: $dbErr');
+        }
+      }
+
+      if (adminUser.housing == null && adminUser.idHouse != null) {
+        final h = await getHousingById(adminUser.idHouse!);
+        if (h != null) adminUser = adminUser.copyWith(housing: h);
+      }
+
+      _currentUser = adminUser;
+      return adminUser;
+    }
+
+    // 2. Cek Akun Petugas / Akun Internal (@resik.id)
+    // Akun petugas dibuat langsung oleh Admin, sehingga bisa login langsung tanpa verifikasi email!
     if (_client != null) {
       try {
         final res = await _client!
@@ -92,34 +144,105 @@ class SupabaseService
             .maybeSingle();
 
         if (res != null) {
-          final user = UserModel.fromMap(res);
-          if (user.password == null || user.password == password) {
-            _currentUser = user;
-            if (!_fallbackUsers.any((u) => u.email?.toLowerCase() == cleanEmail)) {
-              _fallbackUsers.add(user);
+          final userDb = UserModel.fromMap(res);
+          final userRole = (userDb.role ?? '').toLowerCase();
+
+          // Jika ini adalah Petugas (atau domain @resik.id)
+          if (userRole == 'petugas' || cleanEmail.endsWith('@resik.id')) {
+            final hashedInput = hashPassword(cleanPassword);
+            final storedPass = userDb.password;
+
+            if (storedPass != null &&
+                storedPass != cleanPassword &&
+                storedPass != hashedInput) {
+              throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
             }
-            return user;
-          } else {
-            throw Exception('Password yang Anda masukkan salah.');
+
+            _currentUser = userDb;
+            return userDb;
           }
         }
       } catch (e) {
-        debugPrint('Supabase login check: $e');
-        if (e.toString().contains('Password yang Anda masukkan salah')) {
+        debugPrint('Direct check for petugas login: $e');
+        if (e.toString().contains('Email atau kata sandi salah')) {
           rethrow;
         }
       }
     }
 
-    // 2. Fallback in-memory
+    // 2. Coba lewat Supabase Auth (Verifikasi Email Supabase untuk Warga/Petugas) jika online
+    if (_client != null) {
+      try {
+        final authRes = await _client!.auth.signInWithPassword(
+          email: cleanEmail,
+          password: cleanPassword,
+        );
+
+        // Login auth berhasil (email telah diverifikasi)
+        UserModel? user;
+        try {
+          final res = await _client!
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', cleanEmail)
+              .maybeSingle();
+
+          if (res != null) {
+            user = UserModel.fromMap(res);
+          }
+        } catch (dbErr) {
+          debugPrint('Supabase fetch User table after auth: $dbErr');
+        }
+
+        user ??= UserModel(
+          nameUsers: authRes.user?.userMetadata?['name'] as String? ??
+              cleanEmail.split('@').first,
+          email: cleanEmail,
+          role: authRes.user?.userMetadata?['role'] as String? ?? 'warga',
+        );
+
+        _currentUser = user;
+        if (!_fallbackUsers.any((u) => u.email?.toLowerCase() == cleanEmail)) {
+          _fallbackUsers.add(user);
+        }
+        return user;
+      } on AuthException catch (e) {
+        debugPrint('Supabase AuthException: ${e.message}');
+        final msg = e.message.toLowerCase();
+        if (msg.contains('email not confirmed') ||
+            msg.contains('not confirmed') ||
+            msg.contains('unconfirmed')) {
+          throw Exception(
+            'EMAIL_NOT_CONFIRMED:Email Anda belum diverifikasi. Silakan periksa inbox atau folder spam email Anda dan klik tautan verifikasi Supabase sebelum masuk.',
+          );
+        } else if (msg.contains('invalid login credentials') ||
+            msg.contains('invalid credentials') ||
+            msg.contains('invalid email or password')) {
+          throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
+        } else {
+          throw Exception(e.message);
+        }
+      } catch (e) {
+        debugPrint('Supabase login check: $e');
+        if (e.toString().contains('EMAIL_NOT_CONFIRMED') ||
+            e.toString().contains('Email atau kata sandi salah')) {
+          rethrow;
+        }
+      }
+    }
+
+    // 3. Fallback in-memory
     final matchedIndex = _fallbackUsers.indexWhere(
       (u) => u.email?.toLowerCase() == cleanEmail,
     );
 
     if (matchedIndex != -1) {
       var matched = _fallbackUsers[matchedIndex];
-      if (matched.password != null && matched.password != password) {
-        throw Exception('Password yang Anda masukkan salah.');
+      final hashedInput = hashPassword(cleanPassword);
+      if (matched.password != null &&
+          matched.password != cleanPassword &&
+          matched.password != hashedInput) {
+        throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
       }
       if (matched.housing == null && matched.idHouse != null) {
         final h = await getHousingById(matched.idHouse!);
@@ -147,15 +270,12 @@ class SupabaseService
         ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''))
         : null;
 
-    if (_fallbackUsers.any((u) => u.email?.toLowerCase() == cleanEmail)) {
-      throw Exception('Email "$cleanEmail" sudah terdaftar. Silakan login.');
-    }
-
+    final hashedPassword = hashPassword(password);
     final newUser = UserModel(
       nameUsers: name,
       email: cleanEmail,
       role: 'warga',
-      password: password,
+      password: hashedPassword,
       phoneNum: cleanPhone,
       idHouse: null,
       housing: null,
@@ -163,18 +283,49 @@ class SupabaseService
 
     if (_client != null) {
       try {
-        final res = await _client!
-            .from('User')
-            .insert(newUser.toMap())
-            .select()
-            .single();
-        final created = UserModel.fromMap(res);
-        _currentUser = created;
-        _fallbackUsers.add(created);
-        return created;
+        // 1. Mendaftar via Supabase Auth (Memicu pengiriman link verifikasi email resmi Supabase)
+        await _client!.auth.signUp(
+          email: cleanEmail,
+          password: password,
+          data: {
+            'name': name,
+            'phone': phone,
+            'role': 'warga',
+          },
+        );
+
+        // 2. Simpan profil ke tabel User
+        try {
+          final res = await _client!
+              .from('User')
+              .insert(newUser.toMap())
+              .select()
+              .single();
+          final created = UserModel.fromMap(res);
+          _fallbackUsers.add(created);
+          return created;
+        } catch (dbErr) {
+          debugPrint('User table insert fallback: $dbErr');
+        }
+
+        _fallbackUsers.add(newUser);
+        return newUser;
+      } on AuthException catch (e) {
+        debugPrint('Supabase Auth signUp error: ${e.message}');
+        if (e.message.toLowerCase().contains('already registered') ||
+            e.message.toLowerCase().contains('already exists')) {
+          throw Exception(
+              'Email "$cleanEmail" sudah terdaftar. Silakan login atau periksa email verifikasi Anda.');
+        }
+        throw Exception(e.message);
       } catch (e) {
         debugPrint('Supabase register warga fallback: $e');
+        if (e.toString().contains('sudah terdaftar')) rethrow;
       }
+    }
+
+    if (_fallbackUsers.any((u) => u.email?.toLowerCase() == cleanEmail)) {
+      throw Exception('Email "$cleanEmail" sudah terdaftar. Silakan login.');
     }
 
     final created = newUser.copyWith(idUsers: _fallbackUsers.length + 1);
@@ -199,8 +350,31 @@ class SupabaseService
   }
 
   @override
+  Future<void> resendVerificationEmail(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (_client != null) {
+      try {
+        await _client!.auth.resend(
+          type: OtpType.signup,
+          email: cleanEmail,
+        );
+      } catch (e) {
+        debugPrint('Supabase resend email error: $e');
+        throw Exception('Gagal mengirim ulang email verifikasi: $e');
+      }
+    }
+  }
+
+  @override
   Future<void> logout() async {
     _currentUser = null;
+    if (_client != null) {
+      try {
+        await _client!.auth.signOut();
+      } catch (e) {
+        debugPrint('Supabase signOut error: $e');
+      }
+    }
   }
 
   // ==========================================
@@ -293,9 +467,11 @@ class SupabaseService
   @override
   Future<bool> joinHousingForUser(int userId, dynamic houseCode) async {
     final codeStr = houseCode.toString().trim().toUpperCase();
+    if (codeStr.isEmpty) return false;
+
     HousingModel? matched;
 
-    // Cek di database Supabase jika online
+    // 1. Cek di database Supabase jika online
     if (_client != null) {
       try {
         final res = await _client!.from('Housing').select();
@@ -312,52 +488,60 @@ class SupabaseService
       }
     }
 
-    // Cek di fallback perumahan
+    // 2. Cek di fallback perumahan (hanya cocokkan kode atau nama perumahan yang benar-benar tersimpan)
     if (matched == null) {
       for (var h in _fallbackHousing) {
         final hc = h.houseCode?.toString().toUpperCase() ?? '';
-        if (hc == codeStr ||
-            h.nameHouse.toUpperCase() == codeStr ||
-            'GAP-RESIK-10' == codeStr ||
-            '102030' == codeStr) {
+        if (hc == codeStr || h.nameHouse.toUpperCase() == codeStr) {
           matched = h;
           break;
         }
       }
     }
 
-    if (matched == null && _fallbackHousing.isNotEmpty) {
-      matched = _fallbackHousing.first;
+    // Jika kode tidak cocok dengan perumahan manapun yang dibuat admin, tolak!
+    if (matched == null) {
+      return false;
     }
 
-    if (matched != null) {
-      final userIdx = _fallbackUsers.indexWhere((u) => u.idUsers == userId);
-      if (userIdx != -1) {
-        _fallbackUsers[userIdx] = _fallbackUsers[userIdx].copyWith(
-          idHouse: matched.idHouse,
-          housing: matched,
-        );
-      }
-      if (_currentUser?.idUsers == userId || _currentUser?.idUsers == null) {
-        _currentUser = _currentUser?.copyWith(
-          idHouse: matched.idHouse,
-          housing: matched,
-        );
-      }
+    // Perbarui data pengguna lokal dan session
+    final userIdx = _fallbackUsers.indexWhere((u) => u.idUsers == userId);
+    if (userIdx != -1) {
+      _fallbackUsers[userIdx] = _fallbackUsers[userIdx].copyWith(
+        idHouse: matched.idHouse,
+        housing: matched,
+      );
+    }
+    
+    // Pastikan _currentUser selalu diperbarui dengan data perumahan baru
+    _currentUser = (_currentUser ?? UserModel(
+      idUsers: userId,
+      nameUsers: 'Warga',
+      role: 'warga',
+    )).copyWith(
+      idHouse: matched.idHouse,
+      housing: matched,
+    );
 
-      if (_client != null) {
-        try {
+    // Simpan relasi ke Supabase User table (berdasarkan id_users atau email)
+    if (_client != null) {
+      try {
+        if (_currentUser?.email != null) {
+          await _client!
+              .from('User')
+              .update({'id_house': matched.idHouse})
+              .ilike('email', _currentUser!.email!);
+        } else {
           await _client!
               .from('User')
               .update({'id_house': matched.idHouse})
               .eq('id_users', userId);
-        } catch (e) {
-          debugPrint('Supabase joinHousing fallback: $e');
         }
+      } catch (e) {
+        debugPrint('Supabase joinHousing fallback: $e');
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
   // ==========================================
@@ -388,7 +572,6 @@ class SupabaseService
   @override
   Future<List<UserModel>> getUsersByRole(String role) async {
     final cleanRole = role.trim().toLowerCase();
-    final List<UserModel> results = [];
 
     if (_client != null) {
       try {
@@ -399,7 +582,7 @@ class SupabaseService
         final list = (response as List)
             .map((item) => UserModel.fromMap(item))
             .toList();
-        results.addAll(list);
+        return list; // Mengembalikan langsung data murni dari database Supabase
       } catch (e) {
         debugPrint('Supabase getUsersByRole with Housing failed: $e, retrying without join...');
         try {
@@ -410,24 +593,17 @@ class SupabaseService
           final list = (response as List)
               .map((item) => UserModel.fromMap(item))
               .toList();
-          results.addAll(list);
+          return list; // Mengembalikan langsung data murni dari database Supabase
         } catch (e2) {
           debugPrint('Supabase getUsersByRole fallback: $e2');
         }
       }
     }
 
-    // Selalu gabungkan dengan fallback lokal agar data yang dibuat saat testing/simulasi tidak hilang
-    for (final u in _fallbackUsers.where((u) => u.role?.toLowerCase() == cleanRole)) {
-      final exists = results.any((r) =>
-          (r.email != null && u.email != null && r.email!.toLowerCase() == u.email!.toLowerCase()) ||
-          (r.idUsers != null && u.idUsers != null && r.idUsers == u.idUsers));
-      if (!exists) {
-        results.add(u);
-      }
-    }
-
-    return results;
+    // Jika offline / client null, gunakan fallback lokal
+    return _fallbackUsers
+        .where((u) => u.role?.toLowerCase() == cleanRole)
+        .toList();
   }
 
   @override
@@ -447,6 +623,7 @@ class SupabaseService
     final userPassword = (password != null && password.trim().isNotEmpty)
         ? password.trim()
         : 'petugas123';
+    final hashedPassword = hashPassword(userPassword);
 
     if (_fallbackUsers.any((u) => u.email?.toLowerCase() == generatedEmail)) {
       throw Exception('Email "$generatedEmail" sudah digunakan oleh pengguna lain.');
@@ -457,13 +634,27 @@ class SupabaseService
       phoneNum: cleanPhone,
       email: generatedEmail,
       role: role ?? 'petugas',
-      password: userPassword,
+      password: hashedPassword,
       idHouse: idHouse ??
           (_fallbackHousing.isNotEmpty ? _fallbackHousing.first.idHouse : 1),
       housing: _fallbackHousing.isNotEmpty ? _fallbackHousing.first : null,
     );
 
     if (_client != null) {
+      try {
+        await _client!.auth.signUp(
+          email: generatedEmail,
+          password: userPassword,
+          data: {
+            'name': name,
+            'phone': phone,
+            'role': role ?? 'petugas',
+          },
+        );
+      } catch (authErr) {
+        debugPrint('Supabase Auth signUp for petugas: $authErr');
+      }
+
       try {
         final res = await _client!
             .from('User')
@@ -513,7 +704,7 @@ class SupabaseService
           num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''));
     }
     if (email != null) updates['email'] = email;
-    if (password != null) updates['password'] = password;
+    if (password != null) updates['password'] = hashPassword(password);
 
     if (_client != null && updates.isNotEmpty) {
       try {
@@ -549,7 +740,6 @@ class SupabaseService
 
   @override
   Future<List<PickupReqModel>> getAllPickupRequests() async {
-    final List<PickupReqModel> results = [];
     if (_client != null) {
       try {
         final response = await _client!
@@ -559,7 +749,7 @@ class SupabaseService
         final list = (response as List)
             .map((item) => PickupReqModel.fromMap(item))
             .toList();
-        results.addAll(list);
+        return list;
       } catch (e) {
         debugPrint('Supabase getAllPickupRequests with User join failed: $e. Retrying plain select...');
         try {
@@ -570,27 +760,18 @@ class SupabaseService
           final list = (response as List)
               .map((item) => PickupReqModel.fromMap(item))
               .toList();
-          results.addAll(list);
+          return list;
         } catch (e2) {
           debugPrint('Supabase getAllPickupRequests fallback: $e2');
         }
       }
     }
 
-    // Merge fallback
-    for (final r in _fallbackPickupRequests) {
-      final exists = results.any((x) =>
-          x.idPickup != null && r.idPickup != null && x.idPickup == r.idPickup);
-      if (!exists) {
-        results.add(r);
-      }
-    }
-    return results;
+    return List.from(_fallbackPickupRequests);
   }
 
   @override
   Future<List<PickupReqModel>> getPickupRequestsByUserId(int userId) async {
-    final List<PickupReqModel> results = [];
     if (_client != null) {
       try {
         final response = await _client!
@@ -601,9 +782,9 @@ class SupabaseService
         final list = (response as List)
             .map((item) => PickupReqModel.fromMap(item))
             .toList();
-        results.addAll(list);
+        return list;
       } catch (e) {
-        debugPrint('Supabase getPickupRequestsByUserId join failed: $e');
+        debugPrint('Supabase getPickupRequestsByUserId with User failed: $e, retrying plain select...');
         try {
           final response = await _client!
               .from('Pickup_req')
@@ -613,21 +794,14 @@ class SupabaseService
           final list = (response as List)
               .map((item) => PickupReqModel.fromMap(item))
               .toList();
-          results.addAll(list);
+          return list;
         } catch (e2) {
           debugPrint('Supabase getPickupRequestsByUserId fallback: $e2');
         }
       }
     }
 
-    for (final r in _fallbackPickupRequests.where((p) => p.idUsers == userId)) {
-      final exists = results.any((x) =>
-          x.idPickup != null && r.idPickup != null && x.idPickup == r.idPickup);
-      if (!exists) {
-        results.add(r);
-      }
-    }
-    return results;
+    return _fallbackPickupRequests.where((r) => r.idUsers == userId).toList();
   }
 
   @override

@@ -12,23 +12,12 @@ class WargaBuatLaporanScreen extends StatefulWidget {
 }
 
 class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
-  String _selectedProblem = 'Sampah menumpuk';
-  final _locationController = TextEditingController(text: 'Dekat gerbang Blok B');
-  final _descController = TextEditingController(
-    text: 'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.',
-  );
+  final _locationController = TextEditingController();
+  final _descController = TextEditingController();
   bool _hasPhoto = false;
   String? _photoName;
   String? _photoSource; // 'Kamera' atau 'Galeri'
   String? _photoSize;
-
-  final List<String> _problems = [
-    'Sampah menumpuk',
-    'Tong sampah rusak',
-    'Daun berserakan',
-    'Limbah liar di selokan',
-    'Lainnya',
-  ];
 
   @override
   void dispose() {
@@ -38,9 +27,19 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
   }
 
   Future<void> _handleSubmit() async {
-    if (_locationController.text.trim().isEmpty) {
+    final location = _locationController.text.trim();
+    final desc = _descController.text.trim();
+
+    if (location.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lokasi tidak boleh kosong')),
+        const SnackBar(content: Text('Lokasi / Tempat tidak boleh kosong')),
+      );
+      return;
+    }
+
+    if (desc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Deskripsi masalah tidak boleh kosong')),
       );
       return;
     }
@@ -51,9 +50,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
     await SupabaseService.instance.createPickupRequest(
       PickupReqModel(
         idPickup: 0,
-        description: _descController.text.trim(),
+        description: '$location - $desc',
         idUsers: idUsers,
-        category: _selectedProblem,
+        category: 'Laporan Warga',
         status: 'pending',
         photo: _hasPhoto ? _photoName : null,
         pickupDate: DateTime.now(),
@@ -161,64 +160,9 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
 
               const SizedBox(height: 20),
 
-              // Field: Jenis masalah
+              // Field: Lokasi / Tempat Kejadian
               const Text(
-                'Jenis masalah',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBg, // #FFFFFF
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border), // #D9DDD7
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedProblem,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
-                    items: _problems.map((problem) {
-                      return DropdownMenuItem<String>(
-                        value: problem,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 18,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              problem,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedProblem = val);
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Field: Lokasi
-              const Text(
-                'Lokasi',
+                'Tempat / Lokasi',
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -231,7 +175,7 @@ class _WargaBuatLaporanScreenState extends State<WargaBuatLaporanScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.cardBg,
-                  hintText: 'Masukkan lokasi pengaduan',
+                  hintText: 'Contoh: Depan Blok C No. 12 / Taman Utama',
                   hintStyle: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textMuted,

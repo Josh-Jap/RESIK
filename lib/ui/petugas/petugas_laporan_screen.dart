@@ -32,14 +32,18 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
         setState(() {
           _reports.clear();
           for (final item in list) {
+            final isSelesai = item.statusLabel == 'Selesai';
+            final isDiproses = item.statusLabel == 'Diproses';
             _reports.add({
               'id': item.idPickup,
               'title': item.category ?? 'Pengaduan Sampah',
-              'location': item.user?.nameUsers ?? 'Dekat gerbang Blok B',
+              'location': item.description.contains(' - ')
+                  ? item.description.split(' - ').first
+                  : (item.user?.nameUsers ?? 'Area Perumahan'),
               'time': 'Baru saja',
-              'route': 'Rute 1: Wilayah Blok A–C',
-              'icon': item.statusLabel == 'Selesai' ? Icons.eco_outlined : Icons.delete_outline_rounded,
-              'isAccepted': item.statusLabel == 'Diproses' || item.statusLabel == 'Selesai',
+              'status': item.status ?? 'pending',
+              'icon': isSelesai ? Icons.eco_outlined : Icons.delete_outline_rounded,
+              'isAccepted': isDiproses || isSelesai,
               'desc': item.description,
             });
           }
@@ -62,8 +66,7 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
     if (query.isEmpty) return _reports;
     return _reports.where((r) {
       return (r['title'] as String).toLowerCase().contains(query) ||
-          (r['location'] as String).toLowerCase().contains(query) ||
-          (r['route'] as String).toLowerCase().contains(query);
+          (r['location'] as String).toLowerCase().contains(query);
     }).toList();
   }
 
@@ -74,9 +77,13 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg, // #F5F3EA
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _fetchReports,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
@@ -264,11 +271,10 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                '${item['time']}\n${item['route']}',
+                                item['time'],
                                 style: const TextStyle(
                                   fontSize: 10.5,
                                   color: AppColors.textMuted,
-                                  height: 1.3,
                                 ),
                               ),
                             ],
@@ -319,6 +325,7 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

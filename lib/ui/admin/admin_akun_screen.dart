@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import 'admin_login_screen.dart';
@@ -150,9 +151,13 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
+        child: RefreshIndicator(
+          onRefresh: _loadProfileData,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Top Profile Card (Dark Green)
@@ -276,10 +281,50 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                     },
                   ),
                   const Divider(color: AppColors.border, height: 1),
-                  _buildInfoRow(
-                    label: 'Kode Perumahan',
-                    value: _housingCode,
-                    showEdit: false,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Kode Perumahan',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _housingCode,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryGreen,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_housingCode != '-' && _housingCode.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.copy_rounded, color: AppColors.primaryGreen, size: 20),
+                            tooltip: 'Salin Kode untuk dibagikan via WhatsApp',
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: _housingCode));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Kode perumahan "$_housingCode" disalin! Siap dibagikan ke WhatsApp warga.'),
+                                  backgroundColor: AppColors.primaryGreen,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   _buildInfoRow(
@@ -417,7 +462,8 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSectionCard({
@@ -526,7 +572,7 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
           ),
           Switch(
             value: value,
-            activeColor: AppColors.primaryGreen,
+            activeThumbColor: AppColors.primaryGreen,
             onChanged: onChanged,
           ),
         ],

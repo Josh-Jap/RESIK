@@ -25,5 +25,7 @@ abstract class IAuthService {
     String? phone,
   });
 
+  Future<void> resendVerificationEmail(String email);
+
   Future<void> logout();
 }

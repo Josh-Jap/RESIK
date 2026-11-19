@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_avatar_badge.dart';
-import 'petugas_detail_pengambilan_screen.dart';
+import '../widgets/resik_image_picker_dialog.dart';
 
 class PetugasDetailLaporanScreen extends StatefulWidget {
   final Map<String, dynamic>? reportData;
@@ -15,15 +15,71 @@ class PetugasDetailLaporanScreen extends StatefulWidget {
 }
 
 class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen> {
+  bool _isProcessing = false;
+  bool _hasProofPhoto = false;
+  String? _proofPhotoName;
+  late String _status;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.reportData?['status'] ?? 'pending';
+    if (widget.reportData?['isAccepted'] == true && _status == 'pending') {
+      _status = 'in_progress';
+    }
+  }
+
+  Future<void> _handleAccept() async {
+    final reportId = widget.reportData?['id'];
+    setState(() => _isProcessing = true);
+    if (reportId != null) {
+      await SupabaseService.instance.updatePickupStatus(reportId, 'in_progress');
+    }
+    if (!mounted) return;
+    setState(() {
+      _status = 'in_progress';
+      _isProcessing = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Laporan diterima! Silakan ambil sampah dan unggah bukti selesai.'),
+        backgroundColor: AppColors.primaryGreen,
+      ),
+    );
+  }
+
+  Future<void> _handleComplete() async {
+    final reportId = widget.reportData?['id'];
+    setState(() => _isProcessing = true);
+    if (reportId != null) {
+      await SupabaseService.instance.updatePickupStatus(reportId, 'completed');
+    }
+    if (!mounted) return;
+    setState(() {
+      _status = 'completed';
+      _isProcessing = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tugas selesai! Bukti penjemputan sampah berhasil disimpan.'),
+        backgroundColor: AppColors.primaryGreen,
+      ),
+    );
+    Navigator.of(context).pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final title = widget.reportData?['title'] ?? 'Sampah menumpuk';
-    final location = widget.reportData?['location'] ?? 'Dekat gerbang Blok B';
-    final time = widget.reportData?['time'] ?? '08.15 · 2 menit lalu';
-    final route = widget.reportData?['route'] ?? 'Rute 1: Wilayah Blok A–C';
+    final title = widget.reportData?['title'] ?? 'Laporan Sampah';
+    final location = widget.reportData?['location'] ?? 'Area Perumahan';
+    final desc = widget.reportData?['desc'] ?? 'Laporan pengangkutan sampah warga.';
+    final time = widget.reportData?['time'] ?? 'Baru saja';
+
+    final isCompleted = _status == 'completed' || _status == 'selesai';
+    final isInProgress = _status == 'in_progress' || _status == 'diproses';
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg, // #F5F3EA
+      backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -56,15 +112,15 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                             style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary, // #252A27
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Tinjau pengaduan sebelum di lokasi dan ditangani.',
+                            'Alur penerimaan dan penyelesaian tugas.',
                             style: TextStyle(
                               fontSize: 11.5,
-                              color: AppColors.textSecondary, // #7FA68C
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -77,13 +133,13 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
 
               const SizedBox(height: 18),
 
-              // CARD 1: Ringkasan laporan
+              // CARD 1: Ringkasan Laporan
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBg, // #FFFFFF
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border), // #D9DDD7
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +148,7 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Ringkasan laporan',
+                          'Status Laporan',
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -103,15 +159,25 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE3EDF0),
+                            color: isCompleted
+                                ? AppColors.badgeSelesaiBg
+                                : (isInProgress
+                                    ? AppColors.badgeDiprosesBg
+                                    : const Color(0xFFE3EDF0)),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Menunggu konfirmasi',
+                          child: Text(
+                            isCompleted
+                                ? 'Selesai'
+                                : (isInProgress ? 'Sedang Dikerjakan' : 'Menunggu Diterima'),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF35697B),
+                              color: isCompleted
+                                  ? AppColors.badgeSelesaiText
+                                  : (isInProgress
+                                      ? AppColors.badgeDiprosesText
+                                      : const Color(0xFF35697B)),
                             ),
                           ),
                         ),
@@ -127,8 +193,8 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                             color: AppColors.cardSubtle,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
-                            Icons.delete_outline_rounded,
+                          child: Icon(
+                            isCompleted ? Icons.check_circle_outline_rounded : Icons.delete_outline_rounded,
                             color: AppColors.primaryGreen,
                             size: 24,
                           ),
@@ -156,7 +222,7 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                               ),
                               const SizedBox(height: 1),
                               Text(
-                                '$time · $route',
+                                time,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textMuted,
@@ -173,19 +239,19 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
 
               const SizedBox(height: 14),
 
-              // CARD 2: Detail laporan
+              // CARD 2: Deskripsi & Lokasi
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBg, // #FFFFFF
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border), // #D9DDD7
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Detail laporan',
+                      'Informasi Detail',
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
@@ -193,126 +259,100 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _buildDetailItem('Deskripsi',
-                        'Tumpukan sampah sudah dua hari belum diangkut dan mulai mengganggu akses jalan.'),
+                    _buildDetailItem('Deskripsi Pengaduan', desc),
                     const Divider(color: AppColors.border, height: 16),
-                    _buildDetailItem('Lokasi', location),
-                    const Divider(color: AppColors.border, height: 16),
-                    _buildDetailItem('Waktu aduan', time),
-                    const Divider(color: AppColors.border, height: 16),
-                    _buildDetailItem('Wilayah tanggung jawab', 'Blok A–C · Taman Utama'),
+                    _buildDetailItem('Tempat / Lokasi', location),
                   ],
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // CARD 3: Foto laporan
+              // CARD 3: BUKTI PENGAMBILAN (Placeholder Foto)
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBg, // #FFFFFF
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border), // #D9DDD7
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Foto laporan',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Foto Bukti Sampah Selesai Diambil',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (_hasProofPhoto)
+                          const Icon(Icons.check_circle, size: 16, color: AppColors.primaryGreen),
+                      ],
                     ),
                     const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                    InkWell(
+                      onTap: isCompleted
+                          ? null
+                          : () async {
+                              final result = await ResikImagePickerDialog.show(
+                                context,
+                                hasExistingPhoto: _hasProofPhoto,
+                              );
+                              if (result != null) {
+                                setState(() {
+                                  _hasProofPhoto = true;
+                                  _proofPhotoName = result.fileName;
+                                });
+                              }
+                            },
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        height: 150,
+                        height: 140,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: AppColors.cardSubtle,
-                          border: Border.all(color: AppColors.border),
+                          color: _hasProofPhoto ? const Color(0xFFE8F5E9) : AppColors.cardSubtle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.border,
+                            style: _hasProofPhoto ? BorderStyle.solid : BorderStyle.solid,
+                          ),
                         ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Placeholder scenic / street trash representation
-                            Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Color(0xFF8D99AE), Color(0xFF2B2D42)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _hasProofPhoto ? Icons.photo_library_rounded : Icons.add_a_photo_outlined,
+                                size: 36,
+                                color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _hasProofPhoto
+                                    ? (_proofPhotoName ?? 'Bukti foto terpasang')
+                                    : 'Klik untuk ambil/unggah foto bukti',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: _hasProofPhoto ? AppColors.primaryGreen : AppColors.textPrimary,
                                 ),
                               ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(
-                                      Icons.photo_library_outlined,
-                                      size: 38,
-                                      color: Colors.white70,
-                                    ),
-                                    SizedBox(height: 6),
-                                    Text(
-                                      'Dokumentasi Pengaduan Warga',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Blok C2 / Dekat Gerbang',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 10.5,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(height: 3),
+                              Text(
+                                _hasProofPhoto ? 'Siap diverifikasi selesai' : 'Gunakan kamera atau galeri untuk bukti fisik',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // CARD 4: Setelah diterima (Soft Green Box)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE7F3EC), // Soft green
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFC7EBD6)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Setelah diterima',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryGreen, // #245C4A
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Laporan akan masuk ke daftar tugas aktif dan status diubah otomatis menjadi \'Tim Pengangkut 2\'.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.primaryGreen,
-                        height: 1.35,
                       ),
                     ),
                   ],
@@ -321,46 +361,75 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
 
               const SizedBox(height: 20),
 
-              // Button: Terima Laporan
-              SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final reportId = widget.reportData?['id'];
-                    if (reportId != null) {
-                      await SupabaseService.instance.updatePickupStatus(reportId, 'in_progress');
-                    }
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Laporan diterima! Masuk ke jadwal tugas aktif.'),
-                        backgroundColor: AppColors.primaryGreen,
+              // ACTION BUTTONS SESUAI ALUR:
+              // 1. Belum diterima -> Tombol "Terima Laporan"
+              // 2. Sudah diterima (Proses) -> Tombol "Selesaikan Pengambilan"
+              // 3. Sudah selesai -> Status Selesai
+              if (!isInProgress && !isCompleted)
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _handleAccept,
+                    icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                    label: const Text(
+                      'Terima Laporan',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
                       ),
-                    );
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const PetugasDetailPengambilanScreen(),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
-                  label: const Text(
-                    'Terima Laporan',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen, // #245C4A
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                )
+              else if (isInProgress)
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _handleComplete,
+                    icon: const Icon(Icons.task_alt_rounded, size: 20),
+                    label: const Text(
+                      'Selesaikan Pengambilan',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E7E34), // Darker green
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE4F7EC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF83EBAB)),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Laporan ini telah selesai dikerjakan',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryGreen,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
               const SizedBox(height: 20),
             ],
@@ -388,7 +457,7 @@ class _PetugasDetailLaporanScreenState extends State<PetugasDetailLaporanScreen>
           style: const TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary, // #252A27
+            color: AppColors.textPrimary,
             height: 1.35,
           ),
         ),

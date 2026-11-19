@@ -17,43 +17,31 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
 
   final List<Map<String, dynamic>> _periodData = [
     {
-      'date': 'Jumat, 25 September 2026',
-      'total': '120 kg',
-      'organik': '72 kg',
-      'nonOrganik': '48 kg',
-      'ratio': 'Organik 60% · Non-organik 40%',
-      'organikPct': 0.60,
-      'rincian': [
-        {'area': 'Blok A - C', 'org': '27', 'non': '18', 'tot': '45'},
-        {'area': 'Blok D - F', 'org': '24', 'non': '16', 'tot': '40'},
-        {'area': 'Area umum', 'org': '21', 'non': '14', 'tot': '35'},
-      ],
+      'date': 'Hari Ini',
+      'total': '0 kg',
+      'organik': '0 kg',
+      'nonOrganik': '0 kg',
+      'ratio': 'Belum ada data penimbangan sampah',
+      'organikPct': 0.50,
+      'rincian': <Map<String, String>>[],
     },
     {
-      'date': '21–27 September 2026',
-      'total': '800 kg',
-      'organik': '480 kg',
-      'nonOrganik': '320 kg',
-      'ratio': 'Organik 60% · Non-organik 40%',
-      'organikPct': 0.60,
-      'rincian': [
-        {'area': 'Blok A - C', 'org': '180', 'non': '120', 'tot': '300'},
-        {'area': 'Blok D - F', 'org': '168', 'non': '112', 'tot': '280'},
-        {'area': 'Area umum', 'org': '132', 'non': '88', 'tot': '220'},
-      ],
+      'date': 'Minggu Ini',
+      'total': '0 kg',
+      'organik': '0 kg',
+      'nonOrganik': '0 kg',
+      'ratio': 'Belum ada data penimbangan sampah',
+      'organikPct': 0.50,
+      'rincian': <Map<String, String>>[],
     },
     {
-      'date': '1–30 September 2026',
-      'total': '3.200 kg',
-      'organik': '1.920 kg',
-      'nonOrganik': '1.280 kg',
-      'ratio': 'Organik 60% · Non-organik 40%',
-      'organikPct': 0.60,
-      'rincian': [
-        {'area': 'Blok A - C', 'org': '720', 'non': '480', 'tot': '1.200'},
-        {'area': 'Blok D - F', 'org': '672', 'non': '448', 'tot': '1.120'},
-        {'area': 'Area umum', 'org': '528', 'non': '352', 'tot': '880'},
-      ],
+      'date': 'Bulan Ini',
+      'total': '0 kg',
+      'organik': '0 kg',
+      'nonOrganik': '0 kg',
+      'ratio': 'Belum ada data penimbangan sampah',
+      'organikPct': 0.50,
+      'rincian': <Map<String, String>>[],
     },
   ];
 
@@ -372,13 +360,27 @@ class _AdminSampahScreenState extends State<AdminSampahScreen> {
                       child: Divider(color: AppColors.border, height: 1),
                     ),
                     // Table Rows
-                    ...List.generate(
-                      (current['rincian'] as List).length,
-                      (idx) {
-                        final row = current['rincian'][idx];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
+                    if ((current['rincian'] as List).isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text(
+                            'Belum ada rincian pengumpulan sampah',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...List.generate(
+                        (current['rincian'] as List).length,
+                        (idx) {
+                          final row = current['rincian'][idx];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
                             children: [
                               Expanded(
                                 flex: 4,
