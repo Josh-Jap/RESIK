@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../backend/backend.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../widgets/resik_week_date_selector.dart';
 
 class PetugasJadwalScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -13,8 +14,19 @@ class PetugasJadwalScreen extends StatefulWidget {
 }
 
 class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
+  DateTime _selectedDate = DateTime.now();
   List<ScheduleModel> _schedules = [];
   bool _isLoading = true;
+
+  static const List<String> _dayNamesFull = [
+    'Minggu',
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+  ];
 
   @override
   void initState() {
@@ -35,6 +47,39 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  List<ScheduleModel> get _filteredSchedules {
+    final selectedDayName = _dayNamesFull[_selectedDate.weekday % 7].toLowerCase();
+    final d2 = _selectedDate.day.toString().padLeft(2, '0');
+    final m2 = _selectedDate.month.toString().padLeft(2, '0');
+    final y4 = _selectedDate.year.toString();
+
+    final dateIso = '$y4-$m2-$d2';
+    final dateSlash1 = '${_selectedDate.day}/${_selectedDate.month}/$y4';
+    final dateSlash2 = '$d2/$m2/$y4';
+
+    final matched = _schedules.where((s) {
+      if (s.date != null && s.date!.trim().isNotEmpty) {
+        final d = s.date!.trim();
+        if (d == dateIso || d == dateSlash1 || d == dateSlash2 || d.contains(dateIso)) {
+          return true;
+        }
+      }
+      if (s.day != null && s.day!.trim().isNotEmpty) {
+        final day = s.day!.trim().toLowerCase();
+        if (day == selectedDayName || day.contains(selectedDayName) || selectedDayName.contains(day)) {
+          return true;
+        }
+      }
+      if ((s.date == null || s.date!.trim().isEmpty || s.date == 'Pilih tanggal') &&
+          (s.day == null || s.day!.trim().isEmpty)) {
+        return true;
+      }
+      return false;
+    }).toList();
+
+    return matched;
   }
 
   void _showTimbangSampahDialog(ScheduleModel schedule) {
@@ -226,8 +271,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeSchedules = _schedules.where((s) => s.status != 'Selesai').toList();
-    final completedSchedules = _schedules.where((s) => s.status == 'Selesai').toList();
+    final dayLabel = _dayNamesFull[_selectedDate.weekday % 7];
+    final displayList = _filteredSchedules;
+    final activeSchedules = displayList.where((s) => s.status != 'Selesai').toList();
+    final completedSchedules = displayList.where((s) => s.status == 'Selesai').toList();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -278,6 +325,18 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
 
                 const SizedBox(height: 18),
 
+                // Settable Week and Date Selector
+                ResikWeekDateSelector(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (newDate) {
+                    setState(() {
+                      _selectedDate = newDate;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 18),
+
                 // CARD: Jadwal Pengangkutan Rutin Aktif
                 Container(
                   decoration: BoxDecoration(
@@ -303,9 +362,9 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Text(
-                                'Jadwal Hari Ini',
-                                style: TextStyle(
+                              Text(
+                                'Jadwal $dayLabel (${_selectedDate.day}/${_selectedDate.month})',
+                                style: const TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
@@ -345,12 +404,15 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                           ),
                         )
                       else if (activeSchedules.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Center(
                             child: Text(
-                              'Semua jadwal pengangkutan hari ini telah selesai!',
-                              style: TextStyle(
+                              completedSchedules.isNotEmpty
+                                  ? 'Semua jadwal pada tanggal ini telah diselesaikan!'
+                                  : 'Tidak ada jadwal pengangkutan aktif pada tanggal ini.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
                                 fontSize: 12.5,
                                 color: AppColors.primaryGreen,
                                 fontWeight: FontWeight.w600,
@@ -492,7 +554,7 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
                     ),
                     child: const Center(
                       child: Text(
-                        'Belum ada jadwal yang diselesaikan hari ini.',
+                        'Belum ada jadwal yang diselesaikan pada tanggal ini.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,

@@ -33,7 +33,7 @@ class AdminBottomNav extends StatelessWidget {
       activeIcon: Icons.calendar_month_rounded,
     ),
     _NavItem(
-      label: 'Petugas',
+      label: 'User',
       icon: Icons.group_outlined,
       activeIcon: Icons.group_rounded,
     ),

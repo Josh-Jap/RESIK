@@ -70,12 +70,17 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
       return;
     }
 
+    final pickedDate = DateTime.tryParse(_selectedDate);
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    final dayStr = pickedDate != null ? dayNames[pickedDate.weekday % 7] : null;
+
     final newSchedule = {
       'time': _selectedTime,
       'area': area,
       'type': 'Jenis: $_selectedWasteType',
       'status': _selectedStatus,
-      'date': _selectedDate,
+      'date': _selectedDate != 'Pilih tanggal' ? _selectedDate : null,
+      'day': dayStr,
       'officer': _selectedOfficer != 'Pilih petugas pengangkutan'
           ? _selectedOfficer
           : null,
@@ -183,9 +188,11 @@ class _AdminTambahJadwalScreenState extends State<AdminTambahJadwalScreen> {
                               lastDate: DateTime(2030),
                             );
                             if (picked != null) {
+                              final d = picked.day.toString().padLeft(2, '0');
+                              final m = picked.month.toString().padLeft(2, '0');
+                              final y = picked.year.toString();
                               setState(() {
-                                _selectedDate =
-                                    '${picked.day}/${picked.month}/${picked.year}';
+                                _selectedDate = '$y-$m-$d';
                               });
                             }
                           },

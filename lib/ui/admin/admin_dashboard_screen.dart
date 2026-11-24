@@ -331,7 +331,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     _buildQuickAction(
                       icon: Icons.group_outlined,
-                      label: 'Data petugas',
+                      label: 'Data user',
                       onTap: () => widget.onNavigateTab?.call(4),
                     ),
                     _buildQuickAction(

@@ -16,34 +16,60 @@ class AdminPetugasScreen extends StatefulWidget {
 
 class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
   final _searchController = TextEditingController();
-  final List<Map<String, dynamic>> _petugasList = [];
+  // 0: Semua, 1: Petugas, 2: Warga
+  int _selectedCategoryIndex = 0;
+
+  final List<Map<String, dynamic>> _allUsers = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchPetugas();
+    _fetchUsers();
   }
 
-  Future<void> _fetchPetugas() async {
+  Future<void> _fetchUsers() async {
     setState(() => _isLoading = true);
     try {
-      final list = await SupabaseService.instance.getUsersByRole('petugas');
+      final petugasList = await SupabaseService.instance.getUsersByRole('petugas');
+      final wargaList = await SupabaseService.instance.getUsersByRole('warga');
+
+      final List<Map<String, dynamic>> temp = [];
+
+      for (final p in petugasList) {
+        final active = await SupabaseService.instance.isUserActive(p.idUsers, email: p.email);
+        temp.add({
+          'id_users': p.idUsers,
+          'initials': p.initials,
+          'name': p.nameUsers,
+          'phone': p.displayPhone,
+          'email': p.email ?? '-',
+          'role': 'petugas',
+          'roleLabel': 'Petugas',
+          'area': p.housing?.nameHouse ?? 'Petugas Kebersihan',
+          'isActive': active,
+        });
+      }
+
+      for (final w in wargaList) {
+        final active = await SupabaseService.instance.isUserActive(w.idUsers, email: w.email);
+        temp.add({
+          'id_users': w.idUsers,
+          'initials': w.initials,
+          'name': w.nameUsers,
+          'phone': w.displayPhone,
+          'email': w.email ?? '-',
+          'role': 'warga',
+          'roleLabel': 'Warga',
+          'area': w.housing?.nameHouse ?? 'Warga Perumahan',
+          'isActive': active,
+        });
+      }
+
       if (mounted) {
         setState(() {
-          _petugasList.clear();
-          for (final p in list) {
-            _petugasList.add({
-              'id_users': p.idUsers,
-              'initials': p.initials,
-              'name': p.nameUsers,
-              'phone': p.displayPhone,
-              'email': p.email ?? '-',
-              'role': p.role,
-              'area': 'Petugas Kebersihan',
-              'isActive': true,
-            });
-          }
+          _allUsers.clear();
+          _allUsers.addAll(temp);
           _isLoading = false;
         });
       }
@@ -52,189 +78,296 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
     }
   }
 
-  void _showPetugasDetail(Map<String, dynamic> item) {
+  void _toggleUserActiveStatus(Map<String, dynamic> item) {
+    final currentStatus = item['isActive'] as bool;
+    final newStatus = !currentStatus;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          newStatus ? 'Aktifkan Pengguna' : 'Nonaktifkan Pengguna',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          newStatus
+              ? 'Apakah Anda ingin mengaktifkan kembali akun "${item['name']}"?'
+              : 'Apakah Anda yakin ingin menonaktifkan akun "${item['name']}"? Pengguna tidak akan dapat mengakses sistem sementara waktu.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final userId = item['id_users'] as int?;
+              if (userId != null) {
+                await SupabaseService.instance.toggleUserActiveStatus(userId, newStatus);
+              }
+              setState(() {
+                item['isActive'] = newStatus;
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Akun "${item['name']}" berhasil ${newStatus ? 'diaktifkan' : 'dinonaktifkan'}!',
+                    ),
+                    backgroundColor: newStatus ? AppColors.primaryGreen : AppColors.danger,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: newStatus ? AppColors.primaryGreen : AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(newStatus ? 'Aktifkan' : 'Nonaktifkan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUserDetail(Map<String, dynamic> item) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            final isActive = item['isActive'] as bool;
+            final isPetugas = item['role'] == 'petugas';
+
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 20),
-              Row(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.primaryGreen.withValues(
-                      alpha: 0.12,
-                    ),
-                    child: Text(
-                      item['initials'] ?? 'P',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryGreen,
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item['name'] ?? 'Petugas',
-                          style: const TextStyle(
-                            fontSize: 18,
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: (isPetugas ? AppColors.primaryGreen : const Color(0xFF2B6CB0))
+                            .withValues(alpha: 0.12),
+                        child: Text(
+                          item['initials'] ?? 'U',
+                          style: TextStyle(
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                            color: isPetugas ? AppColors.primaryGreen : const Color(0xFF2B6CB0),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: (item['isActive'] == true)
-                                ? Colors.green.shade50
-                                : Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: (item['isActive'] == true)
-                                  ? Colors.green.shade200
-                                  : Colors.red.shade200,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['name'] ?? 'User',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            (item['isActive'] == true)
-                                ? 'Status: Aktif'
-                                : 'Status: Non-Aktif',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: (item['isActive'] == true)
-                                  ? Colors.green.shade700
-                                  : Colors.red.shade700,
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isPetugas
+                                        ? const Color(0xFFE8F5E9)
+                                        : const Color(0xFFEBF8FF),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    item['roleLabel'] ?? 'User',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isPetugas
+                                          ? AppColors.primaryGreen
+                                          : const Color(0xFF2B6CB0),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isActive ? Colors.green.shade50 : Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: isActive ? Colors.green.shade200 : Colors.red.shade200,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isActive ? 'Aktif' : 'Non-Aktif',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: isActive ? Colors.green.shade700 : Colors.red.shade700,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+
+                  // Detail List Items
+                  _buildDetailRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Nomor Telepon',
+                    value: item['phone'] ?? '-',
+                    trailing: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        ResikCallDialog.show(
+                          context,
+                          officerName: item['name'] ?? 'Pengguna',
+                          initialPhone: item['phone'] ?? '',
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.phone_rounded, size: 14, color: AppColors.primaryGreen),
+                            SizedBox(width: 4),
+                            Text(
+                              'Panggil',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 14),
+                  _buildDetailRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email Akun',
+                    value: item['email'] ?? '-',
+                  ),
+                  const SizedBox(height: 14),
+                  _buildDetailRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Kategori Pengguna',
+                    value: item['roleLabel'] ?? 'User',
+                  ),
+                  const SizedBox(height: 14),
+                  _buildDetailRow(
+                    icon: Icons.location_on_outlined,
+                    label: isPetugas ? 'Penugasan' : 'Wilayah / Perumahan',
+                    value: item['area'] ?? '-',
+                  ),
+                  if (item['id_users'] != null) ...[
+                    const SizedBox(height: 14),
+                    _buildDetailRow(
+                      icon: Icons.fingerprint_rounded,
+                      label: 'ID Sistem Database',
+                      value: '#${item['id_users']}',
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // Tombol Aksi: Ubah Keaktifan & Tutup
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _toggleUserActiveStatus(item);
+                          },
+                          icon: Icon(
+                            isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                            size: 18,
+                            color: isActive ? AppColors.danger : AppColors.primaryGreen,
+                          ),
+                          label: Text(
+                            isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isActive ? AppColors.danger : AppColors.primaryGreen,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: isActive ? AppColors.danger : AppColors.primaryGreen,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Tutup',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              const Divider(height: 1),
-              const SizedBox(height: 16),
-
-              // Detail List Items
-              _buildDetailRow(
-                icon: Icons.phone_outlined,
-                label: 'Nomor Telepon',
-                value: item['phone'] ?? '-',
-                trailing: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    ResikCallDialog.show(
-                      context,
-                      officerName: item['name'] ?? 'Petugas',
-                      initialPhone: item['phone'] ?? '',
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.phone_rounded, size: 14, color: AppColors.primaryGreen),
-                        SizedBox(width: 4),
-                        Text(
-                          'Panggil',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _buildDetailRow(
-                icon: Icons.email_outlined,
-                label: 'Email Akun',
-                value: item['email'] ?? '-',
-              ),
-              const SizedBox(height: 14),
-              _buildDetailRow(
-                icon: Icons.badge_outlined,
-                label: 'Peran / Role',
-                value: (item['role'] ?? 'petugas').toString().toUpperCase(),
-              ),
-              const SizedBox(height: 14),
-              _buildDetailRow(
-                icon: Icons.cleaning_services_outlined,
-                label: 'Penugasan',
-                value: item['area'] ?? 'Petugas Kebersihan',
-              ),
-              if (item['id_users'] != null) ...[
-                const SizedBox(height: 14),
-                _buildDetailRow(
-                  icon: Icons.fingerprint_rounded,
-                  label: 'ID Sistem Database',
-                  value: '#${item['id_users']}',
-                ),
-              ],
-
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -275,7 +408,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
             ],
           ),
         ),
-        ?trailing,
+        ...?trailing != null ? [trailing] : null,
       ],
     );
   }
@@ -286,47 +419,89 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredPetugas {
+  List<Map<String, dynamic>> get _filteredUsers {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _petugasList;
-    return _petugasList.where((p) {
-      return (p['name'] as String).toLowerCase().contains(query) ||
-          (p['area'] as String).toLowerCase().contains(query);
+
+    return _allUsers.where((u) {
+      // Filter kategori: 0: Semua, 1: Petugas, 2: Warga
+      if (_selectedCategoryIndex == 1 && u['role'] != 'petugas') return false;
+      if (_selectedCategoryIndex == 2 && u['role'] != 'warga') return false;
+
+      if (query.isEmpty) return true;
+      return (u['name'] as String).toLowerCase().contains(query) ||
+          (u['email'] as String).toLowerCase().contains(query) ||
+          (u['phone'] as String).toLowerCase().contains(query) ||
+          (u['area'] as String).toLowerCase().contains(query);
     }).toList();
+  }
+
+  Widget _buildCategoryTab(int index, String label, int count) {
+    final isSelected = _selectedCategoryIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedCategoryIndex = index;
+          });
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryGreen : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryGreen : AppColors.border,
+            ),
+          ),
+          child: Text(
+            '$label ($count)',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final list = _filteredPetugas;
+    final list = _filteredUsers;
+    final petugasCount = _allUsers.where((u) => u['role'] == 'petugas').length;
+    final wargaCount = _allUsers.where((u) => u['role'] == 'warga').length;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'fab_petugas_admin',
-        onPressed: () async {
-          final res = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const AdminTambahPetugasScreen(),
-            ),
-          );
-          if (res != null) {
-            await _fetchPetugas();
-            if (res is Map<String, dynamic> &&
-                !_petugasList.any((p) => p['name'] == res['name'])) {
-              setState(() {
-                _petugasList.insert(0, Map<String, dynamic>.from(res));
-              });
-            }
-          }
-        },
-        backgroundColor: AppColors.primaryGreen,
-        elevation: 3,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
+      // Tombol tambah petugas muncul saat tab Semua atau tab Petugas aktif
+      floatingActionButton: (_selectedCategoryIndex == 0 || _selectedCategoryIndex == 1)
+          ? FloatingActionButton.extended(
+              heroTag: 'fab_tambah_petugas',
+              onPressed: () async {
+                final res = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminTambahPetugasScreen(),
+                  ),
+                );
+                if (res != null) {
+                  await _fetchUsers();
+                }
+              },
+              backgroundColor: AppColors.primaryGreen,
+              elevation: 3,
+              icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 20),
+              label: const Text(
+                'Tambah Petugas',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _fetchPetugas,
+          onRefresh: _fetchUsers,
           color: AppColors.primaryGreen,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -342,7 +517,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          'Data Petugas',
+                          'Data User',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -351,7 +526,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                         ),
                         SizedBox(height: 3),
                         Text(
-                          'Kelola keaktifan dan penugasan tim lapangan.',
+                          'Kelola akun petugas lapangan dan warga perumahan.',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -367,6 +542,19 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
 
                 const SizedBox(height: 18),
 
+                // Kategori Tabs: Semua, Petugas, Warga
+                Row(
+                  children: [
+                    _buildCategoryTab(0, 'Semua', _allUsers.length),
+                    const SizedBox(width: 8),
+                    _buildCategoryTab(1, 'Petugas', petugasCount),
+                    const SizedBox(width: 8),
+                    _buildCategoryTab(2, 'Warga', wargaCount),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
                 // Search Bar
                 TextField(
                   controller: _searchController,
@@ -374,7 +562,11 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    hintText: 'Cari nama petugas...',
+                    hintText: _selectedCategoryIndex == 1
+                        ? 'Cari nama/email petugas...'
+                        : (_selectedCategoryIndex == 2
+                            ? 'Cari nama/email warga...'
+                            : 'Cari nama, email, atau nomor HP...'),
                     hintStyle: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textMuted,
@@ -411,13 +603,17 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                     ),
                   )
                 else if (list.isEmpty)
-                  const Center(
+                  Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32.0),
+                      padding: const EdgeInsets.all(32.0),
                       child: Text(
-                        'Belum ada petugas terdaftar.\nKlik tombol + di bawah untuk mendaftarkan petugas baru.',
+                        _selectedCategoryIndex == 1
+                            ? 'Belum ada data petugas terdaftar.\nKlik tombol Tambah Petugas untuk mendaftarkan.'
+                            : (_selectedCategoryIndex == 2
+                                ? 'Belum ada data warga terdaftar.'
+                                : 'Tidak ada pengguna ditemukan.'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                           height: 1.4,
@@ -426,13 +622,14 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                     ),
                   )
                 else
-                  // Officers List
+                  // User Cards List
                   ...List.generate(list.length, (idx) {
                     final item = list[idx];
                     final isActive = item['isActive'] as bool;
+                    final isPetugas = item['role'] == 'petugas';
 
                     return InkWell(
-                      onTap: () => _showPetugasDetail(item),
+                      onTap: () => _showUserDetail(item),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -443,19 +640,22 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(
+                            color: isActive ? AppColors.border : Colors.red.shade100,
+                          ),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 20,
-                              backgroundColor: AppColors.cardSubtle,
+                              backgroundColor: (isPetugas ? AppColors.primaryGreen : const Color(0xFF2B6CB0))
+                                  .withValues(alpha: 0.12),
                               child: Text(
-                                item['initials'],
-                                style: const TextStyle(
-                                  fontSize: 13,
+                                item['initials'] ?? 'U',
+                                style: TextStyle(
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
+                                  color: isPetugas ? AppColors.primaryGreen : const Color(0xFF2B6CB0),
                                 ),
                               ),
                             ),
@@ -464,41 +664,98 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    item['name'],
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item['name'] ?? 'User',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isPetugas
+                                              ? const Color(0xFFE8F5E9)
+                                              : const Color(0xFFEBF8FF),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          item['roleLabel'] ?? 'User',
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: isPetugas
+                                                ? AppColors.primaryGreen
+                                                : const Color(0xFF2B6CB0),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 3),
                                   Text(
-                                    item['phone'],
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item['area'],
+                                    '${item['phone']} · ${item['area']}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.textMuted,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Switch(
-                              value: isActive,
-                              activeThumbColor: AppColors.primaryGreen,
-                              onChanged: (val) {
-                                setState(() {
-                                  item['isActive'] = val;
-                                });
-                              },
+                            const SizedBox(width: 8),
+
+                            // Switch Aktif/Nonaktif Langsung
+                            Tooltip(
+                              message: isActive ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan',
+                              child: InkWell(
+                                onTap: () => _toggleUserActiveStatus(item),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isActive ? Colors.green.shade50 : Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isActive ? Colors.green.shade200 : Colors.red.shade200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: isActive ? Colors.green.shade600 : Colors.red.shade600,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isActive ? 'Aktif' : 'Nonaktif',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: isActive ? Colors.green.shade700 : Colors.red.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -506,7 +763,7 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
                     );
                   }),
 
-                const SizedBox(height: 70),
+                const SizedBox(height: 80),
               ],
             ),
           ),

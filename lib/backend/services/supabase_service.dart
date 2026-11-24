@@ -79,33 +79,7 @@ class SupabaseService
     );
     _fallbackUsers.add(adminUser);
 
-    // Jadwal Default Pengangkutan Rutin Komplek
-    _fallbackSchedules.addAll([
-      ScheduleModel(
-        idSchedule: 1,
-        time: '08:00 - 10:00',
-        area: 'Blok A & Blok B',
-        type: 'Jenis: Organik',
-        status: 'Baru',
-        officer: 'Budi Santoso',
-      ),
-      ScheduleModel(
-        idSchedule: 2,
-        time: '10:30 - 12:30',
-        area: 'Blok C & Blok D',
-        type: 'Jenis: Anorganik',
-        status: 'Baru',
-        officer: 'Siti Aminah',
-      ),
-      ScheduleModel(
-        idSchedule: 3,
-        time: '13:30 - 15:30',
-        area: 'Blok E & Fasum',
-        type: 'Jenis: Campuran',
-        status: 'Baru',
-        officer: 'Joko Widodo',
-      ),
-    ]);
+    // Jadwal awal kosong - siap diisi oleh Admin secara riil
   }
 
   // ==========================================
@@ -239,6 +213,13 @@ class SupabaseService
 
         if (res != null) {
           final userDb = UserModel.fromMap(res);
+
+          // Cek apakah akun dinonaktifkan
+          final isActive = await isUserActive(userDb.idUsers, email: cleanEmail);
+          if (!isActive) {
+            throw Exception('Akun Anda telah dinonaktifkan oleh Administrator. Silakan hubungi admin komplek.');
+          }
+
           final userRole = (userDb.role ?? '').toLowerCase();
           final hashedInput = hashPassword(cleanPassword);
           final storedPass = userDb.password;
@@ -335,7 +316,8 @@ class SupabaseService
       } catch (e) {
         debugPrint('Supabase login check: $e');
         if (e.toString().contains('EMAIL_NOT_CONFIRMED') ||
-            e.toString().contains('Email atau kata sandi salah')) {
+            e.toString().contains('Email atau kata sandi salah') ||
+            e.toString().contains('dinonaktifkan')) {
           rethrow;
         }
       }
@@ -348,6 +330,10 @@ class SupabaseService
 
     if (matchedIndex != -1) {
       var matched = _fallbackUsers[matchedIndex];
+      final isActive = await isUserActive(matched.idUsers, email: cleanEmail);
+      if (!isActive) {
+        throw Exception('Akun Anda telah dinonaktifkan oleh Administrator. Silakan hubungi admin komplek.');
+      }
       final hashedInput = hashPassword(cleanPassword);
       if (matched.password != null &&
           matched.password != cleanPassword &&
@@ -906,6 +892,70 @@ class SupabaseService
     }
   }
 
+  Future<void> toggleUserActiveStatus(int idUsers, bool isActive) async {
+    // 1. Update ke Supabase
+    if (_client != null) {
+      try {
+        await _client!.from('User').update({'is_active': isActive}).eq('id_users', idUsers);
+      } catch (e) {
+        debugPrint('Supabase toggleUserActiveStatus: $e');
+      }
+    }
+
+    // 2. Simpan status ke SharedPreferences agar persist
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('user_active_$idUsers', isActive);
+    } catch (e) {
+      debugPrint('Save user active status to prefs: $e');
+    }
+
+    // 3. Update di memori fallback
+    final idx = _fallbackUsers.indexWhere((u) => u.idUsers == idUsers);
+    if (idx != -1) {
+      _fallbackUsers[idx] = _fallbackUsers[idx].copyWith(isActive: isActive);
+    }
+  }
+
+  Future<bool> isUserActive(int? idUsers, {String? email}) async {
+    if (idUsers == null && email == null) return true;
+
+    // Cek di SharedPreferences terlebih dahulu
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (idUsers != null && prefs.containsKey('user_active_$idUsers')) {
+        return prefs.getBool('user_active_$idUsers') ?? true;
+      }
+    } catch (_) {}
+
+    // Cek di Supabase
+    if (_client != null) {
+      try {
+        var query = _client!.from('User').select('is_active');
+        if (idUsers != null) {
+          query = query.eq('id_users', idUsers);
+        } else if (email != null) {
+          query = query.ilike('email', email.trim());
+        }
+        final res = await query.maybeSingle();
+        if (res != null && res['is_active'] != null) {
+          final active = res['is_active'];
+          return active == true || active.toString() == 'true' || active == 1;
+        }
+      } catch (_) {}
+    }
+
+    // Cek di fallback users
+    if (idUsers != null) {
+      final u = _fallbackUsers.firstWhere(
+        (u) => u.idUsers == idUsers,
+        orElse: () => UserModel(nameUsers: '', isActive: true),
+      );
+      return u.isActive;
+    }
+    return true;
+  }
+
   // ==========================================
   // PICKUP REQUEST CRUD (IPickupService)
   // ==========================================
@@ -1117,6 +1167,28 @@ class SupabaseService
     return _fallbackPayments.where((p) => p.idUsers == userId).toList();
   }
 
+  // ==========================================
+  // TARIF IURAN (SETTABLE DENGAN DEFAULT 50.000)
+  // ==========================================
+
+  Future<int> getIuranTarif() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('resik_iuran_tarif') ?? 50000;
+    } catch (_) {
+      return 50000;
+    }
+  }
+
+  Future<void> setIuranTarif(int amount) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('resik_iuran_tarif', amount);
+    } catch (e) {
+      debugPrint('Set iuran tarif error: $e');
+    }
+  }
+
   @override
   Future<PaymentModel> createPayment(PaymentModel payment) async {
     if (_client != null) {
@@ -1179,21 +1251,43 @@ class SupabaseService
   // ==========================================
 
   Future<List<ScheduleModel>> getAllSchedules() async {
+    // 1. Coba ambil dari Supabase tabel "Schedule"
     if (_client != null) {
       try {
         final res = await _client!.from('Schedule').select();
         final list = (res as List)
             .map((i) => ScheduleModel.fromMap(i))
             .toList();
-        return list;
+        if (list.isNotEmpty) {
+          return list;
+        }
       } catch (e) {
-        debugPrint('Supabase getAllSchedules fallback: $e');
+        debugPrint('Supabase getAllSchedules: $e');
       }
     }
+
+    // 2. Coba ambil dari penyimpanan lokal perangkat (SharedPreferences)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('local_resik_schedules');
+      if (savedStr != null && savedStr.isNotEmpty) {
+        final List decoded = jsonDecode(savedStr);
+        final list = decoded.map((i) => ScheduleModel.fromMap(i)).toList();
+        if (list.isNotEmpty) {
+          return list;
+        }
+      }
+    } catch (e) {
+      debugPrint('Local schedules load error: $e');
+    }
+
+    // 3. Fallback default awal
     return List.from(_fallbackSchedules);
   }
 
   Future<ScheduleModel> createSchedule(ScheduleModel schedule) async {
+    ScheduleModel? created;
+
     if (_client != null) {
       try {
         final res = await _client!
@@ -1201,17 +1295,31 @@ class SupabaseService
             .insert(schedule.toMap())
             .select()
             .single();
-        final created = ScheduleModel.fromMap(res);
-        _fallbackSchedules.insert(0, created);
-        return created;
+        created = ScheduleModel.fromMap(res);
       } catch (e) {
-        debugPrint('Supabase createSchedule fallback: $e');
+        debugPrint('Supabase createSchedule: $e');
       }
     }
-    final created = schedule.copyWith(
-      idSchedule: _fallbackSchedules.length + 1,
+
+    created ??= schedule.copyWith(
+      idSchedule: DateTime.now().millisecondsSinceEpoch,
     );
+
     _fallbackSchedules.insert(0, created);
+
+    // Simpan permanen ke SharedPreferences
+    try {
+      final currentList = await getAllSchedules();
+      final updatedList = [created, ...currentList.where((s) => s.idSchedule != created!.idSchedule)];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'local_resik_schedules',
+        jsonEncode(updatedList.map((s) => s.toMap()).toList()),
+      );
+    } catch (e) {
+      debugPrint('Save local schedules error: $e');
+    }
+
     return created;
   }
 
@@ -1223,12 +1331,66 @@ class SupabaseService
             .update({'status': newStatus})
             .eq('id_schedule', idSchedule);
       } catch (e) {
-        debugPrint('Supabase updateScheduleStatus fallback: $e');
+        debugPrint('Supabase updateScheduleStatus: $e');
       }
     }
+
     final idx = _fallbackSchedules.indexWhere((s) => s.idSchedule == idSchedule);
     if (idx != -1) {
       _fallbackSchedules[idx] = _fallbackSchedules[idx].copyWith(status: newStatus);
+    }
+
+    try {
+      final currentList = await getAllSchedules();
+      final updatedList = currentList.map((s) {
+        if (s.idSchedule == idSchedule) {
+          return s.copyWith(status: newStatus);
+        }
+        return s;
+      }).toList();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'local_resik_schedules',
+        jsonEncode(updatedList.map((s) => s.toMap()).toList()),
+      );
+    } catch (e) {
+      debugPrint('Update local schedules error: $e');
+    }
+  }
+
+  Future<void> deleteSchedule(dynamic idSchedule) async {
+    if (idSchedule == null) return;
+
+    // 1. Hapus dari Supabase
+    if (_client != null) {
+      try {
+        await _client!
+            .from('Schedule')
+            .delete()
+            .eq('id_schedule', idSchedule);
+      } catch (e) {
+        debugPrint('Supabase deleteSchedule: $e');
+      }
+    }
+
+    // 2. Hapus dari memori fallback
+    _fallbackSchedules.removeWhere(
+      (s) => s.idSchedule.toString() == idSchedule.toString(),
+    );
+
+    // 3. Hapus dari penyimpanan lokal SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentList = await getAllSchedules();
+      final updatedList = currentList
+          .where((s) => s.idSchedule.toString() != idSchedule.toString())
+          .toList();
+      await prefs.setString(
+        'local_resik_schedules',
+        jsonEncode(updatedList.map((s) => s.toMap()).toList()),
+      );
+    } catch (e) {
+      debugPrint('Delete local schedule error: $e');
     }
   }
 
@@ -1260,11 +1422,24 @@ class SupabaseService
       try {
         await _client!.from('Waste_log').insert(logData);
       } catch (e) {
-        debugPrint('Supabase recordWasteReport fallback: $e');
+        debugPrint('Supabase recordWasteReport: $e');
       }
     }
 
     _fallbackWasteLogs.insert(0, logData);
+
+    // Simpan permanen ke SharedPreferences
+    try {
+      final currentLogs = await getAllWasteLogs();
+      final updatedLogs = [logData, ...currentLogs];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'local_resik_waste_logs',
+        jsonEncode(updatedLogs),
+      );
+    } catch (e) {
+      debugPrint('Save local waste logs error: $e');
+    }
 
     if (idSchedule != null) {
       await updateScheduleStatus(idSchedule, 'Selesai');
@@ -1272,14 +1447,34 @@ class SupabaseService
   }
 
   Future<List<Map<String, dynamic>>> getAllWasteLogs() async {
+    // 1. Coba ambil dari Supabase tabel "Waste_log"
     if (_client != null) {
       try {
-        final res = await _client!.from('Waste_log').select().order('created_at', ascending: false);
-        return List<Map<String, dynamic>>.from(res as List);
+        final res = await _client!
+            .from('Waste_log')
+            .select()
+            .order('created_at', ascending: false);
+        final list = List<Map<String, dynamic>>.from(res as List);
+        if (list.isNotEmpty) {
+          return list;
+        }
       } catch (e) {
-        debugPrint('Supabase getAllWasteLogs fallback: $e');
+        debugPrint('Supabase getAllWasteLogs: $e');
       }
     }
+
+    // 2. Coba ambil dari SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('local_resik_waste_logs');
+      if (savedStr != null && savedStr.isNotEmpty) {
+        final List decoded = jsonDecode(savedStr);
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+    } catch (e) {
+      debugPrint('Local waste logs load error: $e');
+    }
+
     return List.from(_fallbackWasteLogs);
   }
 }

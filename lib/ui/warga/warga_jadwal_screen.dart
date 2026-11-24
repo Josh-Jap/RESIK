@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_avatar_badge.dart';
+import '../widgets/resik_week_date_selector.dart';
 import '../../backend/backend.dart';
 
 class WargaJadwalScreen extends StatefulWidget {
@@ -13,32 +14,24 @@ class WargaJadwalScreen extends StatefulWidget {
 }
 
 class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
-  int _selectedDayIndex = 0;
+  DateTime _selectedDate = DateTime.now();
   List<ScheduleModel> _schedules = [];
   bool _isLoading = true;
 
-  final List<Map<String, String>> _days = [];
+  static const List<String> _dayNamesFull = [
+    'Minggu',
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _initDays();
     _loadSchedules();
-  }
-
-  void _initDays() {
-    final now = DateTime.now();
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    _days.clear();
-    for (int i = 0; i < 7; i++) {
-      final date = now.add(Duration(days: i));
-      _days.add({
-        'day': dayNames[date.weekday % 7],
-        'date': date.day.toString().padLeft(2, '0'),
-        'fullDate':
-            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-      });
-    }
   }
 
   Future<void> _loadSchedules() async {
@@ -56,10 +49,45 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
     }
   }
 
+  List<ScheduleModel> get _filteredSchedules {
+    final selectedDayName = _dayNamesFull[_selectedDate.weekday % 7].toLowerCase();
+    final d2 = _selectedDate.day.toString().padLeft(2, '0');
+    final m2 = _selectedDate.month.toString().padLeft(2, '0');
+    final y4 = _selectedDate.year.toString();
+
+    final dateIso = '$y4-$m2-$d2';
+    final dateSlash1 = '${_selectedDate.day}/${_selectedDate.month}/$y4';
+    final dateSlash2 = '$d2/$m2/$y4';
+
+    final matched = _schedules.where((s) {
+      if (s.date != null && s.date!.trim().isNotEmpty) {
+        final d = s.date!.trim();
+        if (d == dateIso || d == dateSlash1 || d == dateSlash2 || d.contains(dateIso)) {
+          return true;
+        }
+      }
+      if (s.day != null && s.day!.trim().isNotEmpty) {
+        final day = s.day!.trim().toLowerCase();
+        if (day == selectedDayName || day.contains(selectedDayName) || selectedDayName.contains(day)) {
+          return true;
+        }
+      }
+      if ((s.date == null || s.date!.trim().isEmpty || s.date == 'Pilih tanggal') &&
+          (s.day == null || s.day!.trim().isEmpty)) {
+        return true;
+      }
+      return false;
+    }).toList();
+
+    return matched;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = SupabaseService.instance.currentUser;
     final housingName = user?.housing?.nameHouse ?? 'Perumahan Anda';
+    final dayLabel = _dayNamesFull[_selectedDate.weekday % 7];
+    final displaySchedules = _filteredSchedules;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -110,66 +138,19 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
 
                 const SizedBox(height: 18),
 
-                // Calendar Days Horizontal Strip
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(_days.length, (idx) {
-                    final item = _days[idx];
-                    final isSelected = idx == _selectedDayIndex;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedDayIndex = idx;
-                        });
-                      },
-                      child: Container(
-                        width: 44,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primaryGreen
-                              : AppColors.cardBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primaryGreen
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              item['day']!,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: isSelected
-                                    ? Colors.white.withValues(alpha: 0.85)
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              item['date']!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
+                // Settable Week & Date Selector
+                ResikWeekDateSelector(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (newDate) {
+                    setState(() {
+                      _selectedDate = newDate;
+                    });
+                  },
                 ),
 
                 const SizedBox(height: 18),
 
-                // GREEN CARD: Jadwal Hari Ini
+                // GREEN CARD: Ringkasan Pengangkutan Tanggal Terpilih
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen,
@@ -200,9 +181,9 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Text(
-                                'Pengangkutan Hari Ini',
-                                style: TextStyle(
+                              Text(
+                                'Pengangkutan $dayLabel (${_selectedDate.day}/${_selectedDate.month})',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -220,7 +201,7 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              _schedules.isNotEmpty ? 'Aktif' : 'Terjadwal',
+                              displaySchedules.isNotEmpty ? 'Aktif' : 'Terjadwal',
                               style: const TextStyle(
                                 color: AppColors.accentMint,
                                 fontSize: 10.5,
@@ -241,7 +222,7 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                             ),
                           ),
                         )
-                      else if (_schedules.isEmpty) ...[
+                      else if (displaySchedules.isEmpty) ...[
                         Row(
                           children: [
                             Container(
@@ -289,7 +270,7 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                           ],
                         ),
                       ] else ...[
-                        ..._schedules
+                        ...displaySchedules
                             .take(2)
                             .map(
                               (s) => Padding(
@@ -356,16 +337,16 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Daftar Jadwal Pengangkutan',
-                      style: TextStyle(
+                    Text(
+                      'Daftar Jadwal ($dayLabel)',
+                      style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
-                      '${_schedules.length} Jadwal',
+                      '${displaySchedules.length} Jadwal',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -386,30 +367,16 @@ class _WargaJadwalScreenState extends State<WargaJadwalScreen> {
                       ),
                     ),
                   )
-                else if (_schedules.isEmpty) ...[
+                else if (displaySchedules.isEmpty) ...[
                   _buildWeeklyScheduleItem(
-                    '01',
-                    'Hari ini',
+                    '${_selectedDate.day}',
+                    dayLabel,
                     'Angkut sampah rumah tangga',
                     housingName,
                     '08.00',
                   ),
-                  _buildWeeklyScheduleItem(
-                    '02',
-                    'Besok',
-                    'Sampah daur ulang & anorganik',
-                    housingName,
-                    '08.30',
-                  ),
-                  _buildWeeklyScheduleItem(
-                    '03',
-                    'Lusa',
-                    'Sampah kebun & organik',
-                    housingName,
-                    '09.00',
-                  ),
                 ] else ...[
-                  ..._schedules.map((s) => _buildScheduleCard(s)),
+                  ...displaySchedules.map((s) => _buildScheduleCard(s)),
                 ],
 
                 const SizedBox(height: 20),

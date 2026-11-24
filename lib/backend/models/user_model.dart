@@ -9,6 +9,7 @@ class UserModel {
   final String? password;
   final int? idHouse;
   final HousingModel? housing;
+  final bool isActive;
 
   UserModel({
     this.idUsers,
@@ -19,6 +20,7 @@ class UserModel {
     this.password,
     this.idHouse,
     this.housing,
+    this.isActive = true,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -39,6 +41,9 @@ class UserModel {
       housing: map['Housing'] != null && map['Housing'] is Map<String, dynamic>
           ? HousingModel.fromMap(map['Housing'] as Map<String, dynamic>)
           : null,
+      isActive: map['is_active'] != null
+          ? (map['is_active'] == true || map['is_active'].toString() == 'true' || map['is_active'] == 1)
+          : true,
     );
   }
 
@@ -51,6 +56,7 @@ class UserModel {
       'role': role,
       'password': password,
       'id_house': idHouse,
+      'is_active': isActive,
     };
   }
 
@@ -88,6 +94,7 @@ class UserModel {
     String? password,
     int? idHouse,
     HousingModel? housing,
+    bool? isActive,
   }) {
     return UserModel(
       idUsers: idUsers ?? this.idUsers,
@@ -98,6 +105,7 @@ class UserModel {
       password: password ?? this.password,
       idHouse: idHouse ?? this.idHouse,
       housing: housing ?? this.housing,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

@@ -22,6 +22,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
   int _totalIncome = 0;
   int _lunasCount = 0;
   int _belumLunasCount = 0;
+  int _tarifIuran = 50000;
 
   @override
   void initState() {
@@ -29,8 +30,83 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     _fetchPaymentData();
   }
 
+  void _showSetTarifDialog() {
+    final controller = TextEditingController(text: _tarifIuran.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.tune_rounded, color: AppColors.primaryGreen, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Setel Tarif Iuran',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Besaran tarif iuran kebersihan per bulan untuk seluruh warga:',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: 'Rp ',
+                hintText: 'Contoh: 50000',
+                filled: true,
+                fillColor: AppColors.cardSubtle,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final val = int.tryParse(controller.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 50000;
+              await SupabaseService.instance.setIuranTarif(val);
+              if (ctx.mounted) Navigator.of(ctx).pop();
+              await _fetchPaymentData();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tarif iuran berhasil diubah ke Rp ${val.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} / bulan'),
+                    backgroundColor: AppColors.primaryGreen,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _fetchPaymentData() async {
     try {
+      final tarif = await SupabaseService.instance.getIuranTarif();
       final payments = await SupabaseService.instance.getAllPayments();
       final wargaList = await SupabaseService.instance.getUsersByRole('warga');
 
@@ -52,19 +128,22 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       for (final w in wargaList) {
         final payment = paidMap[w.idUsers];
         final isPaid = payment != null;
-        if (isPaid) income += (payment.amount ?? 50000);
+        if (isPaid) income += (payment.amount ?? tarif);
 
         list.add({
           'initials': w.initials,
           'name': w.nameUsers,
           'date': isPaid ? payment.formattedPaidDate : 'Belum ada pembayaran',
-          'amount': isPaid ? payment.formattedAmount : 'Rp50.000',
+          'amount': isPaid
+              ? payment.formattedAmount
+              : 'Rp${tarif.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
           'status': isPaid ? 'Lunas' : 'Belum Bayar',
         });
       }
 
       if (mounted) {
         setState(() {
+          _tarifIuran = tarif;
           _residents.clear();
           _residents.addAll(list);
           _totalIncome = income;
@@ -283,7 +362,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                         icon: Icons.receipt_long_outlined,
                         title: 'Total Tunggakan',
                         value:
-                            'Rp${(_belumLunasCount * 50000).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                            'Rp${(_belumLunasCount * _tarifIuran).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
                         sub: 'Uang belum dibayar',
                       ),
                     ),
@@ -292,9 +371,44 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
                 const SizedBox(height: 12),
 
-                const Text(
-                  'Data contoh · 120 warga · Iuran Rp50.000/bulan',
-                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tarif Iuran: Rp${_tarifIuran.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} / bulan',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: _showSetTarifDialog,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.edit_outlined, size: 13, color: AppColors.primaryGreen),
+                            SizedBox(width: 4),
+                            Text(
+                              'Ubah Tarif',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 18),

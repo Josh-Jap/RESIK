@@ -16,10 +16,12 @@ class WargaPembayaranScreen extends StatefulWidget {
 class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
   // Statuses: 'lunas' (hijau), 'belum_bayar' (kuning), 'telat' (merah), 'mendatang' (abu)
   late List<Map<String, dynamic>> _months;
+  int _tarifIuran = 50000;
 
   @override
   void initState() {
     super.initState();
+    _loadTarif();
     _months = [
       {'month': 'Januari', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
       {'month': 'Februari', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
@@ -39,6 +41,11 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
       {'month': 'Desember', 'subtitle': 'Belum bayar', 'status': 'belum_bayar'},
     ];
     _loadUserPayments();
+  }
+
+  Future<void> _loadTarif() async {
+    final t = await SupabaseService.instance.getIuranTarif();
+    if (mounted) setState(() => _tarifIuran = t);
   }
 
   Future<void> _loadUserPayments() async {
@@ -71,29 +78,32 @@ class _WargaPembayaranScreenState extends State<WargaPembayaranScreen> {
       return;
     }
 
+    final user = SupabaseService.instance.currentUser;
+    final userId = user?.idUsers ?? 1;
+    final orderId = 'RSK-${DateTime.now().millisecondsSinceEpoch}-$userId';
+
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => WargaQrisScreen(
           month: '$monthName 2026',
           status: status == 'telat' ? 'Telat bayar' : 'Menunggu pembayaran',
           isLate: status == 'telat',
+          grossAmount: _tarifIuran,
+          customOrderId: orderId,
         ),
       ),
     );
 
     if (result == true) {
-      final user = SupabaseService.instance.currentUser;
-      final userId = user?.idUsers ?? 1;
       await SupabaseService.instance.createPayment(
         PaymentModel(
           idPayments: 0,
           idUsers: userId,
           month: monthName,
           year: 2026,
-          amount: 50000,
+          amount: _tarifIuran,
           paidAt: DateTime.now(),
-          qrisReference:
-              'QRIS-2026-${monthName.substring(0, 3).toUpperCase()}-$userId',
+          qrisReference: orderId,
         ),
       );
 
