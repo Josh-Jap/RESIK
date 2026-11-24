@@ -19,6 +19,7 @@ class AdminMainScreen extends StatefulWidget {
 
 class _AdminMainScreenState extends State<AdminMainScreen> {
   late int _currentIndex;
+  String _laporanFilter = 'Semua';
 
   @override
   void initState() {
@@ -26,8 +27,11 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     _currentIndex = widget.initialIndex;
   }
 
-  void _onTabSelected(int index) {
+  void _onTabSelected(int index, {String? filter}) {
     setState(() {
+      if (filter != null) {
+        _laporanFilter = filter;
+      }
       _currentIndex = index;
     });
   }
@@ -36,7 +40,10 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Widget build(BuildContext context) {
     final screens = [
       AdminDashboardScreen(onNavigateTab: _onTabSelected),
-      AdminLaporanScreen(onNavigateTab: _onTabSelected),
+      AdminLaporanScreen(
+        initialFilter: _laporanFilter,
+        onNavigateTab: _onTabSelected,
+      ),
       const AdminSampahScreen(),
       const AdminJadwalScreen(),
       const AdminPetugasScreen(),

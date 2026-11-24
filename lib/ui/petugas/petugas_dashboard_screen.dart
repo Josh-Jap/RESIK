@@ -5,7 +5,7 @@ import '../widgets/resik_avatar_badge.dart';
 import '../widgets/resik_detail_laporan_screen.dart';
 
 class PetugasDashboardScreen extends StatefulWidget {
-  final Function(int)? onNavigateTab;
+  final Function(int, {String? filter})? onNavigateTab;
 
   const PetugasDashboardScreen({super.key, this.onNavigateTab});
 
@@ -185,19 +185,31 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatCol('$pendingCount', 'Perlu Diambil'),
+                          _buildStatCol(
+                            '$pendingCount',
+                            'Perlu Diambil',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Baru'),
+                          ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$progressCount', 'Sedang Proses'),
+                          _buildStatCol(
+                            '$progressCount',
+                            'Sedang Proses',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Diproses'),
+                          ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$completedCount', 'Selesai'),
+                          _buildStatCol(
+                            '$completedCount',
+                            'Selesai',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Selesai'),
+                          ),
                         ],
                       ),
                     ],
@@ -405,8 +417,8 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
     );
   }
 
-  Widget _buildStatCol(String count, String label) {
-    return Column(
+  Widget _buildStatCol(String count, String label, {VoidCallback? onTap}) {
+    final col = Column(
       children: [
         Text(
           count,
@@ -427,6 +439,18 @@ class _PetugasDashboardScreenState extends State<PetugasDashboardScreen> {
         ),
       ],
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: col,
+        ),
+      );
+    }
+    return col;
   }
 
   Widget _buildQuickActionCard({

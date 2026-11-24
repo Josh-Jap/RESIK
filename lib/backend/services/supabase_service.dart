@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../contracts/i_auth_service.dart';
 import '../contracts/i_housing_service.dart';
@@ -62,6 +63,7 @@ class SupabaseService
   final List<PaymentModel> _fallbackPayments = [];
   final List<PickupReqModel> _fallbackPickupRequests = [];
   final List<ScheduleModel> _fallbackSchedules = [];
+  final List<Map<String, dynamic>> _fallbackWasteLogs = [];
 
   void _initFallbackData() {
     // Akun Default Admin - Siap pakai, perumahan belum diisi agar pop-up registrasi perumahan muncul pertama kali
@@ -77,8 +79,33 @@ class SupabaseService
     );
     _fallbackUsers.add(adminUser);
 
-    // Catatan: _fallbackHousing, Petugas, Warga, Laporan, Pembayaran mulai dari 0
-    // agar simulasi berjalan murni dari pengisian Admin & Warga!
+    // Jadwal Default Pengangkutan Rutin Komplek
+    _fallbackSchedules.addAll([
+      ScheduleModel(
+        idSchedule: 1,
+        time: '08:00 - 10:00',
+        area: 'Blok A & Blok B',
+        type: 'Jenis: Organik',
+        status: 'Baru',
+        officer: 'Budi Santoso',
+      ),
+      ScheduleModel(
+        idSchedule: 2,
+        time: '10:30 - 12:30',
+        area: 'Blok C & Blok D',
+        type: 'Jenis: Anorganik',
+        status: 'Baru',
+        officer: 'Siti Aminah',
+      ),
+      ScheduleModel(
+        idSchedule: 3,
+        time: '13:30 - 15:30',
+        area: 'Blok E & Fasum',
+        type: 'Jenis: Campuran',
+        status: 'Baru',
+        officer: 'Joko Widodo',
+      ),
+    ]);
   }
 
   // ==========================================
@@ -94,12 +121,13 @@ class SupabaseService
     final cleanEmail = email.trim().toLowerCase();
     final cleanPassword = password.trim();
 
+    // Cek apakah ada password yang diubah dan disimpan secara lokal di perangkat
+    final prefs = await SharedPreferences.getInstance();
+    final localSavedPassword = prefs.getString('user_password_$cleanEmail');
+
     // 1. Cek akun khusus Admin bawaan terlebih dahulu
     // Supaya Admin selalu bisa masuk langsung tanpa hambatan auth/verifikasi email
     if (cleanEmail == 'admin@resik.id') {
-      if (cleanPassword != 'admin123') {
-        throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
-      }
       var adminUser = _fallbackUsers.firstWhere(
         (u) => u.email?.toLowerCase() == 'admin@resik.id',
         orElse: () => UserModel(
@@ -130,7 +158,7 @@ class SupabaseService
                     'name_users': adminUser.nameUsers,
                     'email': 'admin@resik.id',
                     'role': 'admin',
-                    'password': 'admin123',
+                    'password': hashPassword('admin123'),
                   })
                   .select('*, Housing(*)')
                   .single();
@@ -144,6 +172,15 @@ class SupabaseService
         }
       }
 
+      // Verifikasi password admin terhadap password terbaru (bisa plain, hash SHA-256, atau lokal)
+      final hashedInput = hashPassword(cleanPassword);
+      final storedAdminPass = localSavedPassword ?? adminUser.password ?? 'admin123';
+      if (storedAdminPass != cleanPassword &&
+          storedAdminPass != hashedInput &&
+          (localSavedPassword != null || cleanPassword != 'admin123')) {
+        throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
+      }
+
       if (adminUser.housing == null && adminUser.idHouse != null) {
         final h = await getHousingById(adminUser.idHouse!);
         if (h != null) adminUser = adminUser.copyWith(housing: h);
@@ -153,8 +190,45 @@ class SupabaseService
       return adminUser;
     }
 
-    // 2. Cek Akun Petugas / Akun Internal (@resik.id)
-    // Akun petugas dibuat langsung oleh Admin, sehingga bisa login langsung tanpa verifikasi email!
+    // 2. Cek Akun Pengguna (Petugas, Warga, dll) langsung di tabel DB 'User' atau local override
+    // Memastikan akun yang login dengan password lokal/DB yang diubah di profile langsung valid!
+    if (localSavedPassword != null) {
+      final hashedInput = hashPassword(cleanPassword);
+      if (localSavedPassword != cleanPassword && localSavedPassword != hashedInput) {
+        throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
+      }
+
+      UserModel? user;
+      if (_client != null) {
+        try {
+          final res = await _client!
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', cleanEmail)
+              .maybeSingle();
+          if (res != null) user = UserModel.fromMap(res);
+        } catch (_) {}
+      }
+
+      user ??= _fallbackUsers.firstWhere(
+        (u) => u.email?.toLowerCase() == cleanEmail,
+        orElse: () => UserModel(
+          email: cleanEmail,
+          nameUsers: cleanEmail.split('@').first,
+          role: role ?? 'warga',
+        ),
+      );
+
+      if (user.housing == null && user.idHouse != null) {
+        final h = await getHousingById(user.idHouse!);
+        if (h != null) user = user.copyWith(housing: h);
+      }
+      _currentUser = user;
+      return user;
+    }
+
+    // 2. Cek Akun Pengguna (Petugas, Warga, dll) langsung di tabel DB 'User'
+    // Memastikan akun yang login dengan password lokal/DB yang diubah di profile langsung valid!
     if (_client != null) {
       try {
         final res = await _client!
@@ -166,32 +240,39 @@ class SupabaseService
         if (res != null) {
           final userDb = UserModel.fromMap(res);
           final userRole = (userDb.role ?? '').toLowerCase();
+          final hashedInput = hashPassword(cleanPassword);
+          final storedPass = userDb.password;
 
-          // Jika ini adalah Petugas (atau domain @resik.id)
-          if (userRole == 'petugas' || cleanEmail.endsWith('@resik.id')) {
-            final hashedInput = hashPassword(cleanPassword);
-            final storedPass = userDb.password;
+          // Jika ada password tersimpan di tabel User, cek kecocokannya
+          if (storedPass != null && storedPass.isNotEmpty) {
+            final isMatch = storedPass == cleanPassword || storedPass == hashedInput;
 
-            if (storedPass != null &&
-                storedPass != cleanPassword &&
-                storedPass != hashedInput) {
-              throw Exception(
-                'Email atau kata sandi salah. Silakan coba lagi.',
-              );
+            // Untuk Petugas, Admin atau akun internal, verifikasi langsung dari tabel User
+            if (userRole == 'petugas' || userRole == 'admin' || cleanEmail.endsWith('@resik.id')) {
+              if (!isMatch) {
+                throw Exception('Email atau kata sandi salah. Silakan coba lagi.');
+              }
+              var fullUser = userDb;
+              if (fullUser.housing == null && fullUser.idHouse != null) {
+                final h = await getHousingById(fullUser.idHouse!);
+                if (h != null) fullUser = fullUser.copyWith(housing: h);
+              }
+              _currentUser = fullUser;
+              return fullUser;
+            } else if (isMatch) {
+              // Untuk Warga jika password tabel DB cocok langsung, bisa langsung login
+              var fullUser = userDb;
+              if (fullUser.housing == null && fullUser.idHouse != null) {
+                final h = await getHousingById(fullUser.idHouse!);
+                if (h != null) fullUser = fullUser.copyWith(housing: h);
+              }
+              _currentUser = fullUser;
+              return fullUser;
             }
-
-            var fullPetugas = userDb;
-            if (fullPetugas.housing == null && fullPetugas.idHouse != null) {
-              final h = await getHousingById(fullPetugas.idHouse!);
-              if (h != null) fullPetugas = fullPetugas.copyWith(housing: h);
-            }
-
-            _currentUser = fullPetugas;
-            return fullPetugas;
           }
         }
       } catch (e) {
-        debugPrint('Direct check for petugas login: $e');
+        debugPrint('Direct check for User table login: $e');
         if (e.toString().contains('Email atau kata sandi salah')) {
           rethrow;
         }
@@ -751,13 +832,47 @@ class SupabaseService
       );
     }
     if (email != null) updates['email'] = email;
-    if (password != null) updates['password'] = hashPassword(password);
+    if (password != null && password.trim().isNotEmpty) {
+      updates['password'] = hashPassword(password);
+    }
 
-    if (_client != null && updates.isNotEmpty) {
+    if (_client != null) {
+      if (updates.isNotEmpty) {
+        try {
+          await _client!.from('User').update(updates).eq('id_users', idUsers);
+        } catch (e) {
+          debugPrint('Supabase updateUserProfile (User table): $e');
+        }
+      }
+
+      // Jika ada perubahan password dan ada sesi aktif Supabase Auth, sinkronkan juga ke auth.updateUser
+      if (password != null && password.trim().isNotEmpty) {
+        try {
+          if (_client!.auth.currentUser != null) {
+            await _client!.auth.updateUser(
+              UserAttributes(password: password.trim()),
+            );
+          }
+        } catch (authErr) {
+          debugPrint('Supabase updateUser (auth.updateUser): $authErr');
+        }
+      }
+    }
+
+    // Simpan juga password ke SharedPreferences agar tetap tersimpan setelah logout & restart
+    if (password != null && password.trim().isNotEmpty) {
       try {
-        await _client!.from('User').update(updates).eq('id_users', idUsers);
-      } catch (e) {
-        debugPrint('Supabase updateUserProfile fallback: $e');
+        final prefs = await SharedPreferences.getInstance();
+        final targetEmail = email?.trim().toLowerCase() ??
+            _currentUser?.email?.trim().toLowerCase() ??
+            (_fallbackUsers.any((u) => u.idUsers == idUsers)
+                ? _fallbackUsers.firstWhere((u) => u.idUsers == idUsers).email?.trim().toLowerCase()
+                : null);
+        if (targetEmail != null) {
+          await prefs.setString('user_password_$targetEmail', hashPassword(password));
+        }
+      } catch (prefErr) {
+        debugPrint('Save password to prefs error: $prefErr');
       }
     }
 
@@ -770,11 +885,24 @@ class SupabaseService
             ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''))
             : old.phoneNum,
         email: email ?? old.email,
-        password: password ?? old.password,
+        password: (password != null && password.trim().isNotEmpty)
+            ? hashPassword(password)
+            : old.password,
       );
       if (_currentUser?.idUsers == idUsers) {
         _currentUser = _fallbackUsers[idx];
       }
+    } else if (_currentUser != null && _currentUser!.idUsers == idUsers) {
+      _currentUser = _currentUser!.copyWith(
+        nameUsers: name ?? _currentUser!.nameUsers,
+        phoneNum: phone != null
+            ? num.tryParse(phone.replaceAll(RegExp(r'[^0-9]'), ''))
+            : _currentUser!.phoneNum,
+        email: email ?? _currentUser!.email,
+        password: (password != null && password.trim().isNotEmpty)
+            ? hashPassword(password)
+            : _currentUser!.password,
+      );
     }
   }
 
@@ -1085,5 +1213,73 @@ class SupabaseService
     );
     _fallbackSchedules.insert(0, created);
     return created;
+  }
+
+  Future<void> updateScheduleStatus(int idSchedule, String newStatus) async {
+    if (_client != null) {
+      try {
+        await _client!
+            .from('Schedule')
+            .update({'status': newStatus})
+            .eq('id_schedule', idSchedule);
+      } catch (e) {
+        debugPrint('Supabase updateScheduleStatus fallback: $e');
+      }
+    }
+    final idx = _fallbackSchedules.indexWhere((s) => s.idSchedule == idSchedule);
+    if (idx != -1) {
+      _fallbackSchedules[idx] = _fallbackSchedules[idx].copyWith(status: newStatus);
+    }
+  }
+
+  // ==========================================
+  // WASTE LOGS (PENGUMPULAN & TIMBANGAN SAMPAH)
+  // ==========================================
+
+  Future<void> recordWasteReport({
+    required String area,
+    required double organikKg,
+    required double nonOrganikKg,
+    int? idSchedule,
+    String? officerName,
+    String? notes,
+  }) async {
+    final now = DateTime.now();
+    final logData = {
+      'area': area,
+      'organik_kg': organikKg,
+      'non_organik_kg': nonOrganikKg,
+      'total_kg': organikKg + nonOrganikKg,
+      'created_at': now.toIso8601String(),
+      'officer_name': officerName ?? _currentUser?.nameUsers ?? 'Petugas',
+      ...?idSchedule != null ? {'id_schedule': idSchedule} : null,
+      ...?notes != null ? {'notes': notes} : null,
+    };
+
+    if (_client != null) {
+      try {
+        await _client!.from('Waste_log').insert(logData);
+      } catch (e) {
+        debugPrint('Supabase recordWasteReport fallback: $e');
+      }
+    }
+
+    _fallbackWasteLogs.insert(0, logData);
+
+    if (idSchedule != null) {
+      await updateScheduleStatus(idSchedule, 'Selesai');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllWasteLogs() async {
+    if (_client != null) {
+      try {
+        final res = await _client!.from('Waste_log').select().order('created_at', ascending: false);
+        return List<Map<String, dynamic>>.from(res as List);
+      } catch (e) {
+        debugPrint('Supabase getAllWasteLogs fallback: $e');
+      }
+    }
+    return List.from(_fallbackWasteLogs);
   }
 }

@@ -33,6 +33,10 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
   // Password state
   final _oldPasswordController = TextEditingController(text: '••••••••');
   final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscureNewPass = true;
+  bool _obscureConfirmPass = true;
+  bool _isChangingPassword = false;
 
   @override
   void initState() {
@@ -72,6 +76,7 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
   void dispose() {
     _oldPasswordController.dispose();
     _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -113,6 +118,75 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleChangePassword() async {
+    final newPass = _newPasswordController.text.trim();
+    final confirmPass = _confirmPasswordController.text.trim();
+
+    if (newPass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password baru tidak boleh kosong!'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    if (newPass.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password baru minimal 6 karakter!'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    if (newPass != confirmPass) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Konfirmasi password tidak cocok!'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isChangingPassword = true);
+
+    try {
+      final user = SupabaseService.instance.currentUser;
+      if (user?.idUsers != null) {
+        await SupabaseService.instance.updateUserProfile(
+          user!.idUsers!,
+          password: newPass,
+        );
+      }
+
+      if (mounted) {
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password berhasil diubah!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengubah password: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isChangingPassword = false);
+    }
   }
 
   void _handleLogout() {
@@ -454,12 +528,26 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                           const SizedBox(height: 6),
                           TextField(
                             controller: _newPasswordController,
-                            obscureText: true,
+                            obscureText: _obscureNewPass,
                             decoration: InputDecoration(
                               hintText: 'Masukkan password baru',
                               hintStyle: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureNewPass
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureNewPass = !_obscureNewPass;
+                                  });
+                                },
                               ),
                               filled: true,
                               fillColor: Colors.white,
@@ -479,6 +567,93 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                                   color: AppColors.border,
                                 ),
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Konfirmasi Password Baru',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPass,
+                            decoration: InputDecoration(
+                              hintText: 'Ulangi password baru',
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPass
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPass = !_obscureConfirmPass;
+                                  });
+                                },
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: AppColors.border,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 40,
+                            child: ElevatedButton(
+                              onPressed: _isChangingPassword
+                                  ? null
+                                  : _handleChangePassword,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: _isChangingPassword
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Simpan Password Baru',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

@@ -6,22 +6,47 @@ import '../widgets/resik_detail_laporan_screen.dart';
 
 class PetugasLaporanScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
+  final String? initialFilter;
 
-  const PetugasLaporanScreen({super.key, this.onNavigateTab});
+  const PetugasLaporanScreen({
+    super.key,
+    this.onNavigateTab,
+    this.initialFilter,
+  });
 
   @override
-  State<PetugasLaporanScreen> createState() => _PetugasLaporanScreenState();
+  State<PetugasLaporanScreen> createState() => PetugasLaporanScreenState();
 }
 
-class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
+class PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
   final _searchController = TextEditingController();
   final List<Map<String, dynamic>> _reports = [];
   bool _isLoading = false;
+  String _selectedFilter = 'Semua';
+
+  void setFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null) {
+      _selectedFilter = widget.initialFilter!;
+    }
     _fetchReports();
+  }
+
+  @override
+  void didUpdateWidget(covariant PetugasLaporanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFilter != null && widget.initialFilter != oldWidget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter!;
+      });
+    }
   }
 
   Future<void> _fetchReports() async {
@@ -42,6 +67,7 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                   : (item.user?.nameUsers ?? 'Area Perumahan'),
               'time': 'Baru saja',
               'status': item.status ?? 'pending',
+              'statusLabel': item.statusLabel,
               'icon': isSelesai
                   ? Icons.eco_outlined
                   : Icons.delete_outline_rounded,
@@ -66,10 +92,13 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
 
   List<Map<String, dynamic>> get _filteredReports {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _reports;
     return _reports.where((r) {
-      return (r['title'] as String).toLowerCase().contains(query) ||
+      final matchesQuery = query.isEmpty ||
+          (r['title'] as String).toLowerCase().contains(query) ||
           (r['location'] as String).toLowerCase().contains(query);
+      final matchesFilter =
+          _selectedFilter == 'Semua' || r['statusLabel'] == _selectedFilter;
+      return matchesQuery && matchesFilter;
     }).toList();
   }
 
@@ -158,6 +187,21 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 12),
+
+                // Filter Tabs (Semua, Baru, Diproses, Selesai)
+                Row(
+                  children: [
+                    _buildFilterTab('Semua'),
+                    const SizedBox(width: 8),
+                    _buildFilterTab('Baru'),
+                    const SizedBox(width: 8),
+                    _buildFilterTab('Diproses'),
+                    const SizedBox(width: 8),
+                    _buildFilterTab('Selesai'),
+                  ],
+                ),
+
                 const SizedBox(height: 18),
 
                 // Section: Daftar laporan
@@ -178,15 +222,25 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.badgeDiprosesBg, // #FFF4D8
+                        color: _selectedFilter == 'Selesai'
+                            ? AppColors.badgeSelesaiBg
+                            : (_selectedFilter == 'Baru'
+                                ? AppColors.badgeBaruBg
+                                : AppColors.badgeDiprosesBg),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Diproses',
+                      child: Text(
+                        _selectedFilter == 'Semua'
+                            ? '${list.length} Laporan'
+                            : _selectedFilter,
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.badgeDiprosesText, // #D69E2E
+                          color: _selectedFilter == 'Selesai'
+                              ? AppColors.badgeSelesaiText
+                              : (_selectedFilter == 'Baru'
+                                  ? AppColors.badgeBaruText
+                                  : AppColors.badgeDiprosesText),
                         ),
                       ),
                     ),
@@ -337,6 +391,35 @@ class _PetugasLaporanScreenState extends State<PetugasLaporanScreen> {
 
                 const SizedBox(height: 20),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterTab(String label) {
+    final isSelected = _selectedFilter == label;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedFilter = label),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryGreen : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryGreen : AppColors.border,
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
           ),
         ),

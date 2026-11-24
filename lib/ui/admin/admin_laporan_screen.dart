@@ -7,16 +7,27 @@ import 'admin_buat_laporan_screen.dart';
 
 class AdminLaporanScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
+  final String? initialFilter;
 
-  const AdminLaporanScreen({super.key, this.onNavigateTab});
+  const AdminLaporanScreen({
+    super.key,
+    this.onNavigateTab,
+    this.initialFilter,
+  });
 
   @override
-  State<AdminLaporanScreen> createState() => _AdminLaporanScreenState();
+  State<AdminLaporanScreen> createState() => AdminLaporanScreenState();
 }
 
-class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
+class AdminLaporanScreenState extends State<AdminLaporanScreen> {
   final SupabaseService _supabaseService = SupabaseService();
   String _selectedFilter = 'Semua';
+
+  void setFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
 
   // Daftar laporan dinamis murni dari database (kosong saat awal pasang)
   final List<Map<String, dynamic>> _reports = [];
@@ -24,7 +35,20 @@ class _AdminLaporanScreenState extends State<AdminLaporanScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null) {
+      _selectedFilter = widget.initialFilter!;
+    }
     _fetchSupabaseReports();
+  }
+
+  @override
+  void didUpdateWidget(covariant AdminLaporanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFilter != null && widget.initialFilter != oldWidget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter!;
+      });
+    }
   }
 
   Future<void> _fetchSupabaseReports() async {

@@ -18,6 +18,7 @@ class WargaMainScreen extends StatefulWidget {
 
 class _WargaMainScreenState extends State<WargaMainScreen> {
   late int _currentIndex;
+  String _laporanFilter = 'Semua';
 
   @override
   void initState() {
@@ -25,8 +26,11 @@ class _WargaMainScreenState extends State<WargaMainScreen> {
     _currentIndex = widget.initialIndex;
   }
 
-  void _onTabSelected(int index) {
+  void _onTabSelected(int index, {String? filter}) {
     setState(() {
+      if (filter != null) {
+        _laporanFilter = filter;
+      }
       _currentIndex = index;
     });
   }
@@ -35,7 +39,10 @@ class _WargaMainScreenState extends State<WargaMainScreen> {
   Widget build(BuildContext context) {
     final screens = [
       WargaDashboardScreen(onNavigateTab: _onTabSelected),
-      WargaLaporanScreen(onNavigateTab: _onTabSelected),
+      WargaLaporanScreen(
+        initialFilter: _laporanFilter,
+        onNavigateTab: _onTabSelected,
+      ),
       WargaJadwalScreen(onNavigateTab: _onTabSelected),
       WargaPetugasScreen(onNavigateTab: _onTabSelected),
       WargaProfilScreen(onNavigateTab: _onTabSelected),

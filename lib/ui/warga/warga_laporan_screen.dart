@@ -7,22 +7,47 @@ import 'warga_buat_laporan_screen.dart';
 
 class WargaLaporanScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
+  final String? initialFilter;
 
-  const WargaLaporanScreen({super.key, this.onNavigateTab});
+  const WargaLaporanScreen({
+    super.key,
+    this.onNavigateTab,
+    this.initialFilter,
+  });
 
   @override
-  State<WargaLaporanScreen> createState() => _WargaLaporanScreenState();
+  State<WargaLaporanScreen> createState() => WargaLaporanScreenState();
 }
 
-class _WargaLaporanScreenState extends State<WargaLaporanScreen> {
+class WargaLaporanScreenState extends State<WargaLaporanScreen> {
   String _selectedFilter = 'Semua';
+
+  void setFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
+
   List<Map<String, dynamic>> _reports = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null) {
+      _selectedFilter = widget.initialFilter!;
+    }
     _loadReports();
+  }
+
+  @override
+  void didUpdateWidget(covariant WargaLaporanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFilter != null && widget.initialFilter != oldWidget.initialFilter) {
+      setState(() {
+        _selectedFilter = widget.initialFilter!;
+      });
+    }
   }
 
   Future<void> _loadReports() async {

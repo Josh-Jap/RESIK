@@ -6,7 +6,7 @@ import 'warga_buat_laporan_screen.dart';
 import 'warga_join_dialog.dart';
 
 class WargaDashboardScreen extends StatefulWidget {
-  final Function(int)? onNavigateTab;
+  final Function(int, {String? filter})? onNavigateTab;
 
   const WargaDashboardScreen({super.key, this.onNavigateTab});
 
@@ -200,19 +200,31 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatCol('$_totalLaporan', 'Laporan warga'),
+                          _buildStatCol(
+                            '$_totalLaporan',
+                            'Laporan warga',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Semua'),
+                          ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$_selesai', 'Sudah selesai'),
+                          _buildStatCol(
+                            '$_selesai',
+                            'Sudah selesai',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Selesai'),
+                          ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$_diproses', 'Diproses'),
+                          _buildStatCol(
+                            '$_diproses',
+                            'Diproses',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Diproses'),
+                          ),
                         ],
                       ),
                     ],
@@ -369,8 +381,8 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
     return months[month - 1];
   }
 
-  Widget _buildStatCol(String value, String label) {
-    return Column(
+  Widget _buildStatCol(String value, String label, {VoidCallback? onTap}) {
+    final col = Column(
       children: [
         Text(
           value,
@@ -388,6 +400,18 @@ class _WargaDashboardScreenState extends State<WargaDashboardScreen> {
         ),
       ],
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: col,
+        ),
+      );
+    }
+    return col;
   }
 
   Widget _buildQuickAction({

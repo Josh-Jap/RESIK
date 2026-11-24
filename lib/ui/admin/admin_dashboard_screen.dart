@@ -6,7 +6,7 @@ import '../widgets/resik_avatar_badge.dart';
 import 'admin_housing_regis_dialog.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  final Function(int)? onNavigateTab;
+  final Function(int, {String? filter})? onNavigateTab;
 
   const AdminDashboardScreen({super.key, this.onNavigateTab});
 
@@ -244,19 +244,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           _buildStatCol(
                             '${_recentReports.length}',
                             'Laporan aktif',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Semua'),
                           ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$_completedCount', 'Sudah selesai'),
+                          _buildStatCol(
+                            '$_completedCount',
+                            'Sudah selesai',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Selesai'),
+                          ),
                           Container(
                             width: 1,
                             height: 32,
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          _buildStatCol('$_pendingCount', 'Perlu ditangani'),
+                          _buildStatCol(
+                            '$_pendingCount',
+                            'Perlu ditangani',
+                            onTap: () => widget.onNavigateTab?.call(1, filter: 'Baru'),
+                          ),
                         ],
                       ),
                     ],
@@ -499,8 +508,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildStatCol(String count, String label) {
-    return Column(
+  Widget _buildStatCol(String count, String label, {VoidCallback? onTap}) {
+    final col = Column(
       children: [
         Text(
           count,
@@ -521,6 +530,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ],
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: col,
+        ),
+      );
+    }
+    return col;
   }
 
   Widget _buildQuickAction({
