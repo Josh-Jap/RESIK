@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../backend/backend.dart';
 import '../theme/app_colors.dart';
 import '../widgets/resik_logo.dart';
+import '../petugas/petugas_main_screen.dart';
+import '../warga/warga_main_screen.dart';
 import 'admin_login_screen.dart';
+import 'admin_main_screen.dart';
 
 class AdminSplashScreen extends StatefulWidget {
   const AdminSplashScreen({super.key});
@@ -37,14 +41,29 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
 
     _animController.forward();
 
-    _timer = Timer(const Duration(seconds: 3), _goToLogin);
+    _timer = Timer(const Duration(seconds: 3), _goToNext);
   }
 
-  void _goToLogin() {
+  Future<void> _goToNext() async {
+    _timer?.cancel();
+    final restoredUser = await SupabaseService.instance.restoreSession();
     if (!mounted) return;
+
+    Widget targetScreen = const AdminLoginScreen();
+    if (restoredUser != null) {
+      final role = (restoredUser.role ?? 'warga').toLowerCase();
+      if (role == 'admin') {
+        targetScreen = const AdminMainScreen();
+      } else if (role == 'petugas') {
+        targetScreen = const PetugasMainScreen();
+      } else {
+        targetScreen = const WargaMainScreen();
+      }
+    }
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, anim, secondAnim) => const AdminLoginScreen(),
+        pageBuilder: (context, anim, secondAnim) => targetScreen,
         transitionsBuilder: (context, anim, secondAnim, child) {
           return FadeTransition(opacity: anim, child: child);
         },
@@ -63,7 +82,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _goToLogin,
+      onTap: _goToNext,
       child: Scaffold(
         backgroundColor: AppColors.primaryDark,
         body: Center(

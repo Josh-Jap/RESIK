@@ -39,6 +39,8 @@ class SupabaseService
     }
   }
 
+  static const String _sessionPrefsKey = 'saved_user_session';
+
   // Active user session
   UserModel? _currentUser;
   @override
@@ -47,6 +49,59 @@ class SupabaseService
   @override
   void setCurrentUser(UserModel? user) {
     _currentUser = user;
+    _saveSessionToPrefs(user);
+  }
+
+  Future<void> _saveSessionToPrefs(UserModel? user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (user == null) {
+        await prefs.remove(_sessionPrefsKey);
+      } else {
+        final map = user.toMap();
+        if (user.housing != null) {
+          map['Housing'] = user.housing!.toMap();
+        }
+        await prefs.setString(_sessionPrefsKey, jsonEncode(map));
+      }
+    } catch (e) {
+      debugPrint('Gagal menyimpan sesi ke SharedPreferences: $e');
+    }
+  }
+
+  /// Memulihkan sesi login terakhir dari SharedPreferences agar user tidak perlu login ulang
+  Future<UserModel?> restoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sessionPrefsKey);
+      if (raw == null || raw.isEmpty) return null;
+
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      var user = UserModel.fromMap(map);
+
+      // Jika online, coba segarkan data terbaru dari Supabase (misal id_house / Housing)
+      if (_client != null && user.email != null) {
+        try {
+          final res = await _client!
+              .from('User')
+              .select('*, Housing(*)')
+              .ilike('email', user.email!)
+              .maybeSingle();
+          if (res != null) {
+            user = UserModel.fromMap(res);
+            await _saveSessionToPrefs(user);
+          }
+        } catch (e) {
+          debugPrint('Refresh sesi dari Supabase gagal (pakai cache lokal): $e');
+        }
+      }
+
+      _currentUser = user;
+      return _currentUser;
+    } catch (e) {
+      debugPrint('Gagal memulihkan sesi: $e');
+      return null;
+    }
   }
 
   /// Helper untuk hashing password menggunakan SHA-256
@@ -458,6 +513,7 @@ class SupabaseService
   @override
   Future<void> logout() async {
     _currentUser = null;
+    await _saveSessionToPrefs(null);
     if (_client != null) {
       try {
         await _client!.auth.signOut();
@@ -619,6 +675,7 @@ class SupabaseService
         (_currentUser ??
                 UserModel(idUsers: userId, nameUsers: 'Warga', role: 'warga'))
             .copyWith(idHouse: matched.idHouse, housing: matched);
+    await _saveSessionToPrefs(_currentUser);
 
     // Simpan relasi ke Supabase User table (berdasarkan id_users atau email)
     if (_client != null) {
