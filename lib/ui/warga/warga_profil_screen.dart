@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../admin/admin_login_screen.dart';
 import '../../backend/backend.dart';
@@ -73,25 +74,60 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
         SupabaseService.instance.setCurrentUser(user);
       }
     }
+
+    HousingModel? fallbackHousing;
+    if (user?.housing == null ||
+        user?.housing?.address == null ||
+        user!.housing!.address!.trim().isEmpty) {
+      final housings = await SupabaseService.instance.getAllHousing();
+      if (housings.isNotEmpty) {
+        fallbackHousing = housings.first;
+      }
+    }
+
+    String? savedLocalAddress;
+    if (user != null) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'warga_address_${user.idUsers ?? user.email ?? 'default'}';
+        savedLocalAddress = prefs.getString(key);
+      } catch (_) {}
+    }
+
     if (user != null && mounted) {
+      final activeHousing = user.housing ?? fallbackHousing;
       setState(() {
         _name = user!.nameUsers.isNotEmpty
             ? user.nameUsers
             : (user.email?.split('@').first ?? 'Warga');
         _email = user.email ?? '-';
         _phone = user.displayPhone;
-        if (user.housing != null) {
-          _housingName = user.housing!.nameHouse;
-          _housingCode = user.housing!.houseCode != null
+        if (activeHousing != null) {
+          _housingName = user.housing != null
+              ? user.housing!.nameHouse
+              : 'Belum Bergabung';
+          _housingCode = user.housing?.houseCode != null
               ? user.housing!.houseCode.toString()
-              : (user.housing!.nameHouse.isNotEmpty
+              : (user.housing?.nameHouse.isNotEmpty == true
                     ? user.housing!.nameHouse
                     : '-');
-          _housingAddress = user.housing!.address ?? 'Wilayah Perumahan';
+          _housingAddress = (savedLocalAddress != null &&
+                  savedLocalAddress.trim().isNotEmpty)
+              ? savedLocalAddress
+              : ((user.housing?.address != null &&
+                      user.housing!.address!.trim().isNotEmpty)
+                  ? user.housing!.address!
+                  : ((fallbackHousing?.address != null &&
+                          fallbackHousing!.address!.trim().isNotEmpty)
+                      ? fallbackHousing.address!
+                      : 'Wilayah Perumahan'));
         } else {
           _housingName = 'Belum Bergabung';
           _housingCode = '-';
-          _housingAddress = '-';
+          _housingAddress = (savedLocalAddress != null &&
+                  savedLocalAddress.trim().isNotEmpty)
+              ? savedLocalAddress
+              : '-';
         }
       });
     }
@@ -366,7 +402,23 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
                       onEdit: () => _showEditDialog(
                         'Nama Lengkap',
                         _name,
-                        (val) => setState(() => _name = val),
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          await SupabaseService.instance.updateUserProfile(
+                            user?.idUsers ?? 0,
+                            name: val,
+                            currentEmail: user?.email ?? _email,
+                          );
+                          if (mounted) {
+                            setState(() => _name = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Nama berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const Divider(color: AppColors.border, height: 1),
@@ -377,7 +429,23 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
                       onEdit: () => _showEditDialog(
                         'Email',
                         _email,
-                        (val) => setState(() => _email = val),
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          await SupabaseService.instance.updateUserProfile(
+                            user?.idUsers ?? 0,
+                            email: val,
+                            currentEmail: user?.email ?? _email,
+                          );
+                          if (mounted) {
+                            setState(() => _email = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Email berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const Divider(color: AppColors.border, height: 1),
@@ -421,7 +489,38 @@ class _WargaProfilScreenState extends State<WargaProfilScreen> {
                     _buildInfoRow(
                       label: 'Alamat',
                       value: _housingAddress,
-                      showEdit: false,
+                      showEdit: true,
+                      onEdit: () => _showEditDialog(
+                        'Alamat',
+                        (_housingAddress == '-' ||
+                                _housingAddress == 'Wilayah Perumahan')
+                            ? ''
+                            : _housingAddress,
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          try {
+                            final prefs = await SharedPreferences.getInstance();
+                            final key =
+                                'warga_address_${user?.idUsers ?? user?.email ?? 'default'}';
+                            await prefs.setString(key, val);
+                          } catch (_) {}
+
+                          if (user?.idHouse != null) {
+                            await SupabaseService.instance
+                                .updateHousingAddress(user!.idHouse!, val);
+                          }
+
+                          if (mounted) {
+                            setState(() => _housingAddress = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Alamat berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),

@@ -16,14 +16,14 @@ class AdminAkunScreen extends StatefulWidget {
 
 class _AdminAkunScreenState extends State<AdminAkunScreen> {
   // Profile state
-  late String _name;
-  late String _email;
-  late String _phone;
+  String _name = 'Admin RESIK';
+  String _email = 'admin@resik.id';
+  String _phone = '-';
 
   // Housing state
-  late String _housingName;
-  late String _housingCode;
-  late String _housingAddress;
+  String _housingName = 'Belum Diatur';
+  String _housingCode = '-';
+  String _housingAddress = 'Wilayah Perumahan';
 
   // Notifications state
   bool _notifLaporanBaru = true;
@@ -46,6 +46,19 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
 
   Future<void> _loadProfileData() async {
     var user = SupabaseService.instance.currentUser;
+    if (user != null) {
+      UserModel? fresh;
+      if (user.idUsers != null) {
+        fresh = await SupabaseService.instance.getUserById(user.idUsers!);
+      } else if (user.email != null) {
+        fresh = await SupabaseService.instance.getUserByEmail(user.email!);
+      }
+      if (fresh != null) {
+        user = fresh;
+        SupabaseService.instance.setCurrentUser(user);
+      }
+    }
+
     if (user != null && user.housing == null && user.idHouse != null) {
       final h = await SupabaseService.instance.getHousingById(user.idHouse!);
       if (h != null) {
@@ -341,7 +354,23 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                       onEdit: () => _showEditDialog(
                         'Nama Lengkap',
                         _name,
-                        (val) => setState(() => _name = val),
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          await SupabaseService.instance.updateUserProfile(
+                            user?.idUsers ?? 0,
+                            name: val,
+                            currentEmail: user?.email ?? _email,
+                          );
+                          if (mounted) {
+                            setState(() => _name = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Nama admin berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const Divider(color: AppColors.border, height: 1),
@@ -352,7 +381,23 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                       onEdit: () => _showEditDialog(
                         'Email',
                         _email,
-                        (val) => setState(() => _email = val),
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          await SupabaseService.instance.updateUserProfile(
+                            user?.idUsers ?? 0,
+                            email: val,
+                            currentEmail: user?.email ?? _email,
+                          );
+                          if (mounted) {
+                            setState(() => _email = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Email admin berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const Divider(color: AppColors.border, height: 1),
@@ -441,7 +486,34 @@ class _AdminAkunScreenState extends State<AdminAkunScreen> {
                     _buildInfoRow(
                       label: 'Alamat',
                       value: _housingAddress,
-                      showEdit: false,
+                      showEdit: true,
+                      onEdit: () => _showEditDialog(
+                        'Alamat Perumahan',
+                        _housingAddress == 'Wilayah Perumahan'
+                            ? ''
+                            : _housingAddress,
+                        (val) async {
+                          final updated = await SupabaseService.instance
+                              .updateAdminHousingAddress(val);
+                          if (mounted) {
+                            setState(() {
+                              _housingAddress = updated?.address ?? val;
+                              if (updated != null &&
+                                  updated.nameHouse.isNotEmpty) {
+                                _housingName = updated.nameHouse;
+                              }
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Alamat perumahan berhasil diperbarui!',
+                                ),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),

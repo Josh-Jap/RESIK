@@ -481,14 +481,12 @@ class _AdminPetugasScreenState extends State<AdminPetugasScreen> {
           ? FloatingActionButton.extended(
               heroTag: 'fab_tambah_petugas',
               onPressed: () async {
-                final res = await Navigator.of(context).push(
+                await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const AdminTambahPetugasScreen(),
                   ),
                 );
-                if (res != null) {
-                  await _fetchUsers();
-                }
+                await _fetchUsers();
               },
               backgroundColor: AppColors.primaryGreen,
               elevation: 3,

@@ -13,8 +13,26 @@ class AdminPaymentScreen extends StatefulWidget {
 }
 
 class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
-  String _selectedMonth = 'Oktober';
-  String _selectedYear = '2026';
+  static const List<String> _months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+  static const List<String> _years = ['2024', '2025', '2026', '2027'];
+
+  late String _selectedMonth = _months[DateTime.now().month - 1];
+  late String _selectedYear = _years.contains(DateTime.now().year.toString())
+      ? DateTime.now().year.toString()
+      : '2026';
   String _selectedStatusFilter = 'Semua';
   final _searchController = TextEditingController();
 
@@ -110,11 +128,13 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       final payments = await SupabaseService.instance.getAllPayments();
       final wargaList = await SupabaseService.instance.getUsersByRole('warga');
 
+      final selectedYearInt = int.tryParse(_selectedYear);
       final monthPayments = payments
           .where(
             (p) =>
-                p.month == _selectedMonth &&
-                p.year == int.tryParse(_selectedYear),
+                (p.month ?? '').trim().toLowerCase() ==
+                    _selectedMonth.toLowerCase() &&
+                p.year == selectedYearInt,
           )
           .toList();
       final paidMap = <int, PaymentModel>{};
@@ -124,11 +144,18 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
       final list = <Map<String, dynamic>>[];
       int income = 0;
+      int lunasCount = 0;
+      int belumLunasCount = 0;
 
       for (final w in wargaList) {
-        final payment = paidMap[w.idUsers];
+        final payment = w.idUsers != null ? paidMap[w.idUsers!] : null;
         final isPaid = payment != null;
-        if (isPaid) income += (payment.amount ?? tarif);
+        if (isPaid) {
+          income += (payment.amount ?? tarif);
+          lunasCount++;
+        } else {
+          belumLunasCount++;
+        }
 
         list.add({
           'initials': w.initials,
@@ -147,8 +174,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
           _residents.clear();
           _residents.addAll(list);
           _totalIncome = income;
-          _lunasCount = paidMap.length;
-          _belumLunasCount = wargaList.length - paidMap.length;
+          _lunasCount = lunasCount;
+          _belumLunasCount = belumLunasCount;
         });
       }
     } catch (_) {}
@@ -238,32 +265,40 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: AppColors.border),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _selectedMonth,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const Icon(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedMonth,
+                                isExpanded: true,
+                                icon: const Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   size: 18,
                                   color: AppColors.textSecondary,
                                 ),
-                              ],
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                items: _months.map((m) {
+                                  return DropdownMenuItem<String>(
+                                    value: m,
+                                    child: Text(m),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val == null || val == _selectedMonth) {
+                                    return;
+                                  }
+                                  setState(() => _selectedMonth = val);
+                                  _fetchPaymentData();
+                                },
+                              ),
                             ),
                           ),
                         ],
@@ -284,32 +319,40 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: AppColors.border),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _selectedYear,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const Icon(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedYear,
+                                isExpanded: true,
+                                icon: const Icon(
                                   Icons.keyboard_arrow_down_rounded,
                                   size: 18,
                                   color: AppColors.textSecondary,
                                 ),
-                              ],
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                items: _years.map((y) {
+                                  return DropdownMenuItem<String>(
+                                    value: y,
+                                    child: Text(y),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val == null || val == _selectedYear) {
+                                    return;
+                                  }
+                                  setState(() => _selectedYear = val);
+                                  _fetchPaymentData();
+                                },
+                              ),
                             ),
                           ),
                         ],
@@ -416,8 +459,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                 // Section: Riwayat Pembayaran
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       'Riwayat Pembayaran',
                       style: TextStyle(
                         fontSize: 14.5,
@@ -426,8 +469,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                       ),
                     ),
                     Text(
-                      'Oktober 2026',
-                      style: TextStyle(
+                      '$_selectedMonth $_selectedYear',
+                      style: const TextStyle(
                         fontSize: 11.5,
                         color: AppColors.textSecondary,
                       ),
@@ -485,7 +528,23 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                 const SizedBox(height: 12),
 
                 // List of Residents
-                ...List.generate(list.length, (idx) {
+                if (list.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Tidak ada data warga yang sesuai filter',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                      ),
+                    ),
+                  )
+                else
+                  ...List.generate(list.length, (idx) {
                   final item = list[idx];
                   final isLunas = item['status'] == 'Lunas';
 
@@ -581,10 +640,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
                 const SizedBox(height: 10),
 
-                const Center(
+                Center(
                   child: Text(
-                    'Menampilkan 6 dari 120 warga · Data contoh',
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    'Menampilkan ${list.length} dari ${_residents.length} warga',
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ),
 

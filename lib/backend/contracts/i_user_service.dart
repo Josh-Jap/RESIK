@@ -18,5 +18,6 @@ abstract class IUserService {
     String? phone,
     String? email,
     String? password,
+    String? currentEmail,
   });
 }

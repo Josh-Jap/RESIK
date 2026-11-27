@@ -216,6 +216,7 @@ class SupabaseService
       }
 
       _currentUser = adminUser;
+      await _saveSessionToPrefs(adminUser);
       return adminUser;
     }
 
@@ -253,6 +254,7 @@ class SupabaseService
         if (h != null) user = user.copyWith(housing: h);
       }
       _currentUser = user;
+      await _saveSessionToPrefs(user);
       return user;
     }
 
@@ -294,6 +296,7 @@ class SupabaseService
                 if (h != null) fullUser = fullUser.copyWith(housing: h);
               }
               _currentUser = fullUser;
+              await _saveSessionToPrefs(fullUser);
               return fullUser;
             } else if (isMatch) {
               // Untuk Warga jika password tabel DB cocok langsung, bisa langsung login
@@ -303,6 +306,7 @@ class SupabaseService
                 if (h != null) fullUser = fullUser.copyWith(housing: h);
               }
               _currentUser = fullUser;
+              await _saveSessionToPrefs(fullUser);
               return fullUser;
             }
           }
@@ -345,9 +349,20 @@ class SupabaseService
               cleanEmail.split('@').first,
           email: cleanEmail,
           role: authRes.user?.userMetadata?['role'] as String? ?? 'warga',
+          password: hashPassword(cleanPassword),
         );
 
+        // Jika akun Auth belum punya baris di tabel User (misal insert sebelumnya gagal),
+        // otomatis sinkronkan ke tabel User agar muncul di daftar Admin.
+        if (user.idUsers == null) {
+          final synced = await _insertUserToTable(user);
+          if (synced != null) {
+            user = synced;
+          }
+        }
+
         _currentUser = user;
+        await _saveSessionToPrefs(user);
         if (!_fallbackUsers.any((u) => u.email?.toLowerCase() == cleanEmail)) {
           _fallbackUsers.add(user);
         }
@@ -403,6 +418,7 @@ class SupabaseService
         }
       }
       _currentUser = matched;
+      await _saveSessionToPrefs(matched);
       return matched;
     }
 
@@ -442,17 +458,10 @@ class SupabaseService
         );
 
         // 2. Simpan profil ke tabel User
-        try {
-          final res = await _client!
-              .from('User')
-              .insert(newUser.toMap())
-              .select()
-              .single();
-          final created = UserModel.fromMap(res);
-          _fallbackUsers.add(created);
-          return created;
-        } catch (dbErr) {
-          debugPrint('User table insert fallback: $dbErr');
+        final synced = await _insertUserToTable(newUser);
+        if (synced != null) {
+          _fallbackUsers.add(synced);
+          return synced;
         }
 
         _fallbackUsers.add(newUser);
@@ -479,6 +488,7 @@ class SupabaseService
     final created = newUser.copyWith(idUsers: _fallbackUsers.length + 1);
     _fallbackUsers.add(created);
     _currentUser = created;
+    await _saveSessionToPrefs(created);
     return created;
   }
 
@@ -572,6 +582,7 @@ class SupabaseService
         idHouse: created.idHouse,
         housing: created,
       );
+      await _saveSessionToPrefs(_currentUser);
       final idx = _fallbackUsers.indexWhere(
         (u) =>
             u.idUsers == _currentUser!.idUsers ||
@@ -619,6 +630,78 @@ class SupabaseService
     final created = housing.copyWith(idHouse: _fallbackHousing.length + 1);
     _fallbackHousing.add(created);
     return created;
+  }
+
+  @override
+  Future<HousingModel?> updateHousingAddress(int idHouse, String address) async {
+    final cleanAddress = address.trim();
+    HousingModel? updated;
+
+    if (_client != null) {
+      try {
+        final res = await _client!
+            .from('Housing')
+            .update({'address': cleanAddress})
+            .eq('id_house', idHouse)
+            .select()
+            .maybeSingle();
+        if (res != null) {
+          updated = HousingModel.fromMap(res);
+        }
+      } catch (e) {
+        debugPrint('Supabase updateHousingAddress error: $e');
+      }
+    }
+
+    final idx = _fallbackHousing.indexWhere((h) => h.idHouse == idHouse);
+    if (idx != -1) {
+      updated ??= _fallbackHousing[idx].copyWith(address: cleanAddress);
+      _fallbackHousing[idx] = updated;
+    } else if (updated != null) {
+      _fallbackHousing.add(updated);
+    }
+
+    if (_currentUser != null && _currentUser!.idHouse == idHouse) {
+      final newHousing =
+          updated ?? _currentUser!.housing?.copyWith(address: cleanAddress);
+      if (newHousing != null) {
+        _currentUser = _currentUser!.copyWith(housing: newHousing);
+        await _saveSessionToPrefs(_currentUser);
+      }
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('housing_address_$idHouse', cleanAddress);
+    } catch (_) {}
+
+    return updated;
+  }
+
+  /// Memperbarui alamat perumahan dari profil Admin (membuat/mengaitkan Housing jika belum ada)
+  Future<HousingModel?> updateAdminHousingAddress(String address) async {
+    final cleanAddress = address.trim();
+    if (_currentUser?.idHouse != null) {
+      return updateHousingAddress(_currentUser!.idHouse!, cleanAddress);
+    }
+
+    final housings = await getAllHousing();
+    if (housings.isNotEmpty && housings.first.idHouse != null) {
+      final target = housings.first;
+      final updated = await updateHousingAddress(target.idHouse!, cleanAddress);
+      if (_currentUser != null) {
+        _currentUser = _currentUser!.copyWith(
+          idHouse: target.idHouse,
+          housing: updated ?? target.copyWith(address: cleanAddress),
+        );
+        await _saveSessionToPrefs(_currentUser);
+      }
+      return updated ?? target.copyWith(address: cleanAddress);
+    }
+
+    return addHousing(
+      HousingModel(nameHouse: 'Perumahan RESIK', address: cleanAddress),
+    );
   }
 
   @override
@@ -696,6 +779,68 @@ class SupabaseService
       }
     }
     return true;
+  }
+
+  /// Helper untuk insert user ke tabel 'User' dengan fallback jika kolom opsional (seperti is_active atau id_house) tidak tersedia
+  Future<UserModel?> _insertUserToTable(UserModel user) async {
+    if (_client == null) return null;
+
+    final fullMap = user.toMap();
+    final attempts = <Map<String, dynamic>>[
+      fullMap,
+      Map<String, dynamic>.from(fullMap)..remove('is_active'),
+      Map<String, dynamic>.from(fullMap)
+        ..remove('is_active')
+        ..remove('id_house'),
+    ];
+
+    for (final payload in attempts) {
+      try {
+        final res = await _client!
+            .from('User')
+            .insert(payload)
+            .select()
+            .single();
+        return UserModel.fromMap(res);
+      } catch (e) {
+        debugPrint('Supabase _insertUserToTable attempt failed: $e');
+      }
+    }
+    return null;
+  }
+
+  /// Mengambil data user terbaru dari Supabase berdasarkan email
+  Future<UserModel?> getUserByEmail(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (_client != null) {
+      try {
+        final res = await _client!
+            .from('User')
+            .select('*, Housing(*)')
+            .ilike('email', cleanEmail)
+            .maybeSingle();
+        if (res != null) return UserModel.fromMap(res);
+      } catch (e) {
+        debugPrint('Supabase getUserByEmail with Housing failed: $e');
+        try {
+          final res = await _client!
+              .from('User')
+              .select('*')
+              .ilike('email', cleanEmail)
+              .maybeSingle();
+          if (res != null) return UserModel.fromMap(res);
+        } catch (e2) {
+          debugPrint('Supabase getUserByEmail fallback: $e2');
+        }
+      }
+    }
+    try {
+      return _fallbackUsers.firstWhere(
+        (u) => u.email?.toLowerCase() == cleanEmail,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   // ==========================================
@@ -808,6 +953,11 @@ class SupabaseService
     );
 
     if (_client != null) {
+      // 1. Simpan terlebih dahulu ke tabel User agar pasti muncul di daftar Admin
+      final createdInDb = await _insertUserToTable(newPetugas);
+
+      // 2. Daftarkan juga ke Supabase Auth (simpan sesi admin saat ini agar tidak tertimpa)
+      final previousSession = _client!.auth.currentSession;
       try {
         await _client!.auth.signUp(
           email: generatedEmail,
@@ -816,41 +966,23 @@ class SupabaseService
         );
       } catch (authErr) {
         debugPrint('Supabase Auth signUp for petugas: $authErr');
+      } finally {
+        if (previousSession?.refreshToken != null) {
+          try {
+            await _client!.auth.setSession(previousSession!.refreshToken!);
+          } catch (_) {}
+        }
       }
 
-      try {
-        final res = await _client!
-            .from('User')
-            .insert(newPetugas.toMap())
-            .select()
-            .single();
-        final created = UserModel.fromMap(res);
+      if (createdInDb != null) {
+        final enriched = (createdInDb.housing == null && targetHousing != null)
+            ? createdInDb.copyWith(housing: targetHousing)
+            : createdInDb;
         _fallbackUsers.removeWhere(
           (u) => u.email?.toLowerCase() == generatedEmail,
         );
-        _fallbackUsers.add(created);
-        return created;
-      } catch (e) {
-        debugPrint(
-          'Supabase addPetugas with id_house failed: $e. Retrying without id_house...',
-        );
-        try {
-          final mapWithoutHouse = Map<String, dynamic>.from(newPetugas.toMap())
-            ..remove('id_house');
-          final res = await _client!
-              .from('User')
-              .insert(mapWithoutHouse)
-              .select()
-              .single();
-          final created = UserModel.fromMap(res);
-          _fallbackUsers.removeWhere(
-            (u) => u.email?.toLowerCase() == generatedEmail,
-          );
-          _fallbackUsers.add(created);
-          return created;
-        } catch (e2) {
-          debugPrint('Supabase addPetugas complete fallback to memory: $e2');
-        }
+        _fallbackUsers.add(enriched);
+        return enriched;
       }
     }
 
@@ -866,6 +998,7 @@ class SupabaseService
     String? phone,
     String? email,
     String? password,
+    String? currentEmail,
   }) async {
     final updates = <String, dynamic>{};
     if (name != null) updates['name_users'] = name;
@@ -879,12 +1012,30 @@ class SupabaseService
       updates['password'] = hashPassword(password);
     }
 
+    final lookupEmail =
+        (currentEmail ?? _currentUser?.email)?.trim().toLowerCase();
+
     if (_client != null) {
       if (updates.isNotEmpty) {
         try {
-          await _client!.from('User').update(updates).eq('id_users', idUsers);
+          if (idUsers > 0) {
+            await _client!.from('User').update(updates).eq('id_users', idUsers);
+          } else if (lookupEmail != null && lookupEmail.isNotEmpty) {
+            await _client!
+                .from('User')
+                .update(updates)
+                .ilike('email', lookupEmail);
+          }
         } catch (e) {
           debugPrint('Supabase updateUserProfile (User table): $e');
+          if (lookupEmail != null && lookupEmail.isNotEmpty) {
+            try {
+              await _client!
+                  .from('User')
+                  .update(updates)
+                  .ilike('email', lookupEmail);
+            } catch (_) {}
+          }
         }
       }
 
@@ -919,7 +1070,13 @@ class SupabaseService
       }
     }
 
-    final idx = _fallbackUsers.indexWhere((u) => u.idUsers == idUsers);
+    final idx = _fallbackUsers.indexWhere(
+      (u) =>
+          (idUsers > 0 && u.idUsers == idUsers) ||
+          (lookupEmail != null &&
+              lookupEmail.isNotEmpty &&
+              u.email?.toLowerCase() == lookupEmail),
+    );
     if (idx != -1) {
       final old = _fallbackUsers[idx];
       _fallbackUsers[idx] = old.copyWith(
@@ -932,10 +1089,19 @@ class SupabaseService
             ? hashPassword(password)
             : old.password,
       );
-      if (_currentUser?.idUsers == idUsers) {
+      if (_currentUser != null &&
+          ((idUsers > 0 && _currentUser!.idUsers == idUsers) ||
+              (lookupEmail != null &&
+                  lookupEmail.isNotEmpty &&
+                  _currentUser!.email?.toLowerCase() == lookupEmail))) {
         _currentUser = _fallbackUsers[idx];
+        await _saveSessionToPrefs(_currentUser);
       }
-    } else if (_currentUser != null && _currentUser!.idUsers == idUsers) {
+    } else if (_currentUser != null &&
+        ((idUsers > 0 && _currentUser!.idUsers == idUsers) ||
+            (lookupEmail != null &&
+                lookupEmail.isNotEmpty &&
+                _currentUser!.email?.toLowerCase() == lookupEmail))) {
       _currentUser = _currentUser!.copyWith(
         nameUsers: name ?? _currentUser!.nameUsers,
         phoneNum: phone != null
@@ -946,6 +1112,7 @@ class SupabaseService
             ? hashPassword(password)
             : _currentUser!.password,
       );
+      await _saveSessionToPrefs(_currentUser);
     }
   }
 

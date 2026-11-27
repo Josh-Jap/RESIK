@@ -5,5 +5,6 @@ abstract class IHousingService {
   Future<List<HousingModel>> getAllHousing();
   Future<HousingModel?> getHousingById(int idHouse);
   Future<HousingModel> addHousing(HousingModel housing);
+  Future<HousingModel?> updateHousingAddress(int idHouse, String address);
   Future<bool> joinHousingForUser(int userId, dynamic houseCode);
 }

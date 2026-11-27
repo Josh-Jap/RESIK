@@ -13,10 +13,9 @@ class PetugasProfilScreen extends StatefulWidget {
 }
 
 class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
-  late String _name;
-  late String _idPetugas;
-  late String _housingName;
-  late String _emergencyContact;
+  String _name = 'Petugas';
+  String _idPetugas = '-';
+  String _housingName = 'Belum Ditentukan';
 
   bool _notifLaporanBaru = true;
   bool _notifJadwalHarian = true;
@@ -66,6 +65,14 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
       }
     }
 
+    HousingModel? displayHousing = user?.housing;
+    if (displayHousing == null) {
+      final housings = await SupabaseService.instance.getAllHousing();
+      if (housings.isNotEmpty) {
+        displayHousing = housings.first;
+      }
+    }
+
     final currentUser = user;
     if (currentUser != null && mounted) {
       setState(() {
@@ -73,8 +80,9 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
             ? currentUser.nameUsers
             : 'Petugas';
         _idPetugas = 'PTG-${currentUser.idUsers ?? 204}';
-        _housingName = currentUser.housing?.nameHouse ?? 'Belum Ditentukan';
-        _emergencyContact = currentUser.housing?.address ?? 'Wilayah Perumahan';
+        _housingName = displayHousing?.nameHouse.isNotEmpty == true
+            ? displayHousing!.nameHouse
+            : 'Belum Ditentukan';
       });
     }
   }
@@ -347,7 +355,23 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                       onEdit: () => _showEditDialog(
                         'Nama Lengkap',
                         _name,
-                        (val) => setState(() => _name = val),
+                        (val) async {
+                          final user = SupabaseService.instance.currentUser;
+                          await SupabaseService.instance.updateUserProfile(
+                            user?.idUsers ?? 0,
+                            name: val,
+                            currentEmail: user?.email,
+                          );
+                          if (mounted) {
+                            setState(() => _name = val);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Nama berhasil diperbarui!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     const Divider(color: AppColors.border, height: 1),
@@ -368,12 +392,6 @@ class _PetugasProfilScreenState extends State<PetugasProfilScreen> {
                     _buildInfoRow(
                       label: 'Perumahan',
                       value: _housingName,
-                      showEdit: false,
-                    ),
-                    const Divider(color: AppColors.border, height: 1),
-                    _buildInfoRow(
-                      label: 'Wilayah / Alamat',
-                      value: _emergencyContact,
                       showEdit: false,
                     ),
                   ],
