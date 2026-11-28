@@ -1478,34 +1478,43 @@ class SupabaseService
     // 1. Coba ambil dari Supabase tabel "Schedule"
     if (_client != null) {
       try {
-        final res = await _client!.from('Schedule').select();
+        final res = await _client!
+            .from('Schedule')
+            .select()
+            .order('id_schedule', ascending: false);
         final list = (res as List)
             .map((i) => ScheduleModel.fromMap(i))
             .toList();
-        if (list.isNotEmpty) {
-          return list;
-        }
+        _fallbackSchedules
+          ..clear()
+          ..addAll(list);
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+            'local_resik_schedules',
+            jsonEncode(list.map((s) => s.toMap()).toList()),
+          );
+        } catch (_) {}
+        return list;
       } catch (e) {
         debugPrint('Supabase getAllSchedules: $e');
       }
     }
 
-    // 2. Coba ambil dari penyimpanan lokal perangkat (SharedPreferences)
+    // 2. Jika offline / query gagal, ambil dari penyimpanan lokal perangkat (SharedPreferences)
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('local_resik_schedules');
       if (savedStr != null && savedStr.isNotEmpty) {
         final List decoded = jsonDecode(savedStr);
         final list = decoded.map((i) => ScheduleModel.fromMap(i)).toList();
-        if (list.isNotEmpty) {
-          return list;
-        }
+        return list;
       }
     } catch (e) {
       debugPrint('Local schedules load error: $e');
     }
 
-    // 3. Fallback default awal
+    // 3. Fallback memori
     return List.from(_fallbackSchedules);
   }
 
@@ -1513,15 +1522,25 @@ class SupabaseService
     ScheduleModel? created;
 
     if (_client != null) {
-      try {
-        final res = await _client!
-            .from('Schedule')
-            .insert(schedule.toMap())
-            .select()
-            .single();
-        created = ScheduleModel.fromMap(res);
-      } catch (e) {
-        debugPrint('Supabase createSchedule: $e');
+      final fullMap = schedule.toMap();
+      final minimalMap = <String, dynamic>{
+        'time': schedule.time,
+        'area': schedule.area,
+        'type': schedule.type,
+        'status': schedule.status,
+      };
+      for (final payload in [fullMap, minimalMap]) {
+        try {
+          final res = await _client!
+              .from('Schedule')
+              .insert(payload)
+              .select()
+              .single();
+          created = ScheduleModel.fromMap(res);
+          break;
+        } catch (e) {
+          debugPrint('Supabase createSchedule attempt failed: $e');
+        }
       }
     }
 
@@ -1529,16 +1548,15 @@ class SupabaseService
       idSchedule: DateTime.now().millisecondsSinceEpoch,
     );
 
+    _fallbackSchedules.removeWhere((s) => s.idSchedule == created!.idSchedule);
     _fallbackSchedules.insert(0, created);
 
-    // Simpan permanen ke SharedPreferences
+    // Sinkronkan cache lokal SharedPreferences
     try {
-      final currentList = await getAllSchedules();
-      final updatedList = [created, ...currentList.where((s) => s.idSchedule != created!.idSchedule)];
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         'local_resik_schedules',
-        jsonEncode(updatedList.map((s) => s.toMap()).toList()),
+        jsonEncode(_fallbackSchedules.map((s) => s.toMap()).toList()),
       );
     } catch (e) {
       debugPrint('Save local schedules error: $e');
@@ -1565,18 +1583,22 @@ class SupabaseService
     }
 
     try {
-      final currentList = await getAllSchedules();
-      final updatedList = currentList.map((s) {
-        if (s.idSchedule == idSchedule) {
-          return s.copyWith(status: newStatus);
-        }
-        return s;
-      }).toList();
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'local_resik_schedules',
-        jsonEncode(updatedList.map((s) => s.toMap()).toList()),
-      );
+      final savedStr = prefs.getString('local_resik_schedules');
+      if (savedStr != null && savedStr.isNotEmpty) {
+        final List decoded = jsonDecode(savedStr);
+        final updatedList = decoded.map((item) {
+          final s = ScheduleModel.fromMap(item as Map<String, dynamic>);
+          if (s.idSchedule == idSchedule) {
+            return s.copyWith(status: newStatus);
+          }
+          return s;
+        }).toList();
+        await prefs.setString(
+          'local_resik_schedules',
+          jsonEncode(updatedList.map((s) => s.toMap()).toList()),
+        );
+      }
     } catch (e) {
       debugPrint('Update local schedules error: $e');
     }
@@ -1643,20 +1665,33 @@ class SupabaseService
     };
 
     if (_client != null) {
-      try {
-        await _client!.from('Waste_log').insert(logData);
-      } catch (e) {
-        debugPrint('Supabase recordWasteReport: $e');
+      final minimalLog = <String, dynamic>{
+        'area': area,
+        'organik_kg': organikKg,
+        'non_organik_kg': nonOrganikKg,
+        'total_kg': organikKg + nonOrganikKg,
+        'created_at': now.toIso8601String(),
+      };
+      for (final payload in [logData, minimalLog]) {
+        try {
+          await _client!.from('Waste_log').insert(payload);
+          break;
+        } catch (e) {
+          debugPrint('Supabase recordWasteReport attempt failed: $e');
+        }
       }
     }
 
     _fallbackWasteLogs.insert(0, logData);
 
-    // Simpan permanen ke SharedPreferences
+    // Simpan ke SharedPreferences sebagai cache offline
     try {
-      final currentLogs = await getAllWasteLogs();
-      final updatedLogs = [logData, ...currentLogs];
       final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('local_resik_waste_logs');
+      final existing = (savedStr != null && savedStr.isNotEmpty)
+          ? List<Map<String, dynamic>>.from(jsonDecode(savedStr) as List)
+          : <Map<String, dynamic>>[];
+      final updatedLogs = [logData, ...existing];
       await prefs.setString(
         'local_resik_waste_logs',
         jsonEncode(updatedLogs),
@@ -1679,15 +1714,20 @@ class SupabaseService
             .select()
             .order('created_at', ascending: false);
         final list = List<Map<String, dynamic>>.from(res as List);
-        if (list.isNotEmpty) {
-          return list;
-        }
+        _fallbackWasteLogs
+          ..clear()
+          ..addAll(list);
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('local_resik_waste_logs', jsonEncode(list));
+        } catch (_) {}
+        return list;
       } catch (e) {
         debugPrint('Supabase getAllWasteLogs: $e');
       }
     }
 
-    // 2. Coba ambil dari SharedPreferences
+    // 2. Jika offline / query gagal, ambil dari SharedPreferences
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('local_resik_waste_logs');

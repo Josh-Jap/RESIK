@@ -27,14 +27,37 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     'November',
     'Desember',
   ];
-  static const List<String> _years = ['2024', '2025', '2026', '2027'];
-
   late String _selectedMonth = _months[DateTime.now().month - 1];
-  late String _selectedYear = _years.contains(DateTime.now().year.toString())
-      ? DateTime.now().year.toString()
-      : '2026';
+  late String _selectedYear = DateTime.now().year.toString();
+  late List<String> _availableYears = _buildDynamicYears();
   String _selectedStatusFilter = 'Semua';
   final _searchController = TextEditingController();
+
+  List<String> _buildDynamicYears([List<PaymentModel> payments = const []]) {
+    final currentYear = DateTime.now().year;
+    final yearSet = <int>{};
+
+    // Rentang dinamis berbasis tahun berjalan (otomatis bergeser tiap tahun)
+    for (int y = currentYear - 2; y <= currentYear + 5; y++) {
+      yearSet.add(y);
+    }
+
+    // Tambahkan seluruh tahun unik yang ada di data pembayaran database
+    for (final p in payments) {
+      final py = p.year ?? p.paidAt?.year;
+      if (py != null && py > 2000) {
+        yearSet.add(py);
+      }
+    }
+
+    final selectedInt = int.tryParse(_selectedYear);
+    if (selectedInt != null) {
+      yearSet.add(selectedInt);
+    }
+
+    final sorted = yearSet.toList()..sort();
+    return sorted.map((y) => y.toString()).toList();
+  }
 
   final List<Map<String, dynamic>> _residents = [];
   int _totalIncome = 0;
@@ -128,13 +151,14 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       final payments = await SupabaseService.instance.getAllPayments();
       final wargaList = await SupabaseService.instance.getUsersByRole('warga');
 
+      final dynamicYears = _buildDynamicYears(payments);
       final selectedYearInt = int.tryParse(_selectedYear);
       final monthPayments = payments
           .where(
             (p) =>
                 (p.month ?? '').trim().toLowerCase() ==
                     _selectedMonth.toLowerCase() &&
-                p.year == selectedYearInt,
+                (p.year ?? p.paidAt?.year) == selectedYearInt,
           )
           .toList();
       final paidMap = <int, PaymentModel>{};
@@ -170,6 +194,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
       if (mounted) {
         setState(() {
+          _availableYears = dynamicYears;
           _tarifIuran = tarif;
           _residents.clear();
           _residents.addAll(list);
@@ -339,7 +364,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
-                                items: _years.map((y) {
+                                items: _availableYears.map((y) {
                                   return DropdownMenuItem<String>(
                                     value: y,
                                     child: Text(y),

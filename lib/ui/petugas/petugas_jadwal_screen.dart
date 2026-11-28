@@ -10,10 +10,10 @@ class PetugasJadwalScreen extends StatefulWidget {
   const PetugasJadwalScreen({super.key, this.onNavigateTab});
 
   @override
-  State<PetugasJadwalScreen> createState() => _PetugasJadwalScreenState();
+  State<PetugasJadwalScreen> createState() => PetugasJadwalScreenState();
 }
 
-class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
+class PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
   DateTime _selectedDate = DateTime.now();
   List<ScheduleModel> _schedules = [];
   bool _isLoading = true;
@@ -34,6 +34,8 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
     _loadSchedules();
   }
 
+  Future<void> refreshSchedules() => _loadSchedules();
+
   Future<void> _loadSchedules() async {
     setState(() => _isLoading = true);
     try {
@@ -49,6 +51,26 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
     }
   }
 
+  bool _isCompletedStatus(String status) {
+    final s = status.trim().toLowerCase();
+    return s == 'selesai' || s == 'completed';
+  }
+
+  bool _matchesLoggedInPetugas(ScheduleModel s) {
+    final officer = s.officer?.trim() ?? '';
+    if (officer.isEmpty ||
+        officer.toLowerCase() == 'pilih petugas pengangkutan') {
+      return true;
+    }
+    final currentName =
+        SupabaseService.instance.currentUser?.nameUsers.trim().toLowerCase() ??
+            '';
+    if (currentName.isEmpty) return true;
+    return officer.toLowerCase() == currentName ||
+        officer.toLowerCase().contains(currentName) ||
+        currentName.contains(officer.toLowerCase());
+  }
+
   List<ScheduleModel> get _filteredSchedules {
     final selectedDayName = _dayNamesFull[_selectedDate.weekday % 7].toLowerCase();
     final d2 = _selectedDate.day.toString().padLeft(2, '0');
@@ -60,6 +82,8 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
     final dateSlash2 = '$d2/$m2/$y4';
 
     final matched = _schedules.where((s) {
+      if (!_matchesLoggedInPetugas(s)) return false;
+
       if (s.date != null && s.date!.trim().isNotEmpty) {
         final d = s.date!.trim();
         if (d == dateIso || d == dateSlash1 || d == dateSlash2 || d.contains(dateIso)) {
@@ -223,8 +247,14 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final org = double.tryParse(organikController.text.trim()) ?? 0.0;
-              final non = double.tryParse(nonOrganikController.text.trim()) ?? 0.0;
+              final org = double.tryParse(
+                    organikController.text.trim().replaceAll(',', '.'),
+                  ) ??
+                  0.0;
+              final non = double.tryParse(
+                    nonOrganikController.text.trim().replaceAll(',', '.'),
+                  ) ??
+                  0.0;
 
               if (org <= 0 && non <= 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -273,8 +303,10 @@ class _PetugasJadwalScreenState extends State<PetugasJadwalScreen> {
   Widget build(BuildContext context) {
     final dayLabel = _dayNamesFull[_selectedDate.weekday % 7];
     final displayList = _filteredSchedules;
-    final activeSchedules = displayList.where((s) => s.status != 'Selesai').toList();
-    final completedSchedules = displayList.where((s) => s.status == 'Selesai').toList();
+    final activeSchedules =
+        displayList.where((s) => !_isCompletedStatus(s.status)).toList();
+    final completedSchedules =
+        displayList.where((s) => _isCompletedStatus(s.status)).toList();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

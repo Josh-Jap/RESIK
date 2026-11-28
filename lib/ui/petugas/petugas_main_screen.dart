@@ -17,6 +17,8 @@ class PetugasMainScreen extends StatefulWidget {
 class _PetugasMainScreenState extends State<PetugasMainScreen> {
   late int _currentIndex;
   String _laporanFilter = 'Semua';
+  final GlobalKey<PetugasJadwalScreenState> _jadwalKey =
+      GlobalKey<PetugasJadwalScreenState>();
 
   @override
   void initState() {
@@ -31,6 +33,9 @@ class _PetugasMainScreenState extends State<PetugasMainScreen> {
       }
       _currentIndex = index;
     });
+    if (index == 2) {
+      _jadwalKey.currentState?.refreshSchedules();
+    }
   }
 
   @override
@@ -41,7 +46,7 @@ class _PetugasMainScreenState extends State<PetugasMainScreen> {
         initialFilter: _laporanFilter,
         onNavigateTab: _onTabSelected,
       ),
-      PetugasJadwalScreen(onNavigateTab: _onTabSelected),
+      PetugasJadwalScreen(key: _jadwalKey, onNavigateTab: _onTabSelected),
       PetugasProfilScreen(onNavigateTab: _onTabSelected),
     ];
 

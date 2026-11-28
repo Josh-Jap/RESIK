@@ -17,7 +17,6 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final SupabaseService _supabaseService = SupabaseService.instance;
   List<PickupReqModel> _recentReports = [];
-  int _activePetugasCount = 0;
   int _completedCount = 0;
   int _pendingCount = 0;
   bool _isLoading = false;
@@ -34,14 +33,40 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _promptHousingIfFirstTime() async {
     // 1. Cek penyimpanan lokal permanen (SharedPreferences)
     final prefs = await SharedPreferences.getInstance();
+    var user = _supabaseService.currentUser;
+
+    // 1. Cek jika perumahan belum tersinkron di session tetapi sudah ada di Supabase
+    if (user != null && (user.housing == null || user.idHouse == null)) {
+      if (user.idUsers != null) {
+        final fresh = await _supabaseService.getUserById(user.idUsers!);
+        if (fresh != null) user = fresh;
+      } else if (user.email != null) {
+        final fresh = await _supabaseService.getUserByEmail(user.email!);
+        if (fresh != null) user = fresh;
+      }
+      if (user.housing == null && user.idHouse != null) {
+        final h = await _supabaseService.getHousingById(user.idHouse!);
+        if (h != null) user = user.copyWith(housing: h);
+      }
+      _supabaseService.setCurrentUser(user);
+    }
+
+    // Jika di database Supabase belum ada perumahan sama sekali, bersihkan cache lokal lama
+    if (user != null && user.housing == null && user.idHouse == null) {
+      final allHousings = await _supabaseService.getAllHousing();
+      if (allHousings.isEmpty) {
+        await prefs.remove('has_registered_housing');
+        await prefs.remove('saved_housing_name');
+        await prefs.remove('saved_housing_code');
+      }
+    }
+
     final hasRegisteredLocally =
         prefs.getBool('has_registered_housing') ?? false;
     final savedName = prefs.getString('saved_housing_name');
     final savedCode = prefs.getString('saved_housing_code');
 
-    var user = _supabaseService.currentUser;
-
-    // Jika di lokal sudah pernah diisi, pasang ke user session jika belum ada
+    // Jika di lokal sudah pernah diisi (misal mode offline), pasang ke user session jika belum ada
     if (hasRegisteredLocally &&
         savedName != null &&
         user != null &&
@@ -56,19 +81,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
       _supabaseService.setCurrentUser(user);
       if (mounted) setState(() {});
-    }
-
-    // 2. Cek jika perumahan belum tersinkron di session tetapi sudah ada di Supabase
-    if (user != null && (user.housing == null || user.idHouse == null)) {
-      if (user.idUsers != null) {
-        final fresh = await _supabaseService.getUserById(user.idUsers!);
-        if (fresh != null) user = fresh;
-      }
-      if (user.housing == null && user.idHouse != null) {
-        final h = await _supabaseService.getHousingById(user.idHouse!);
-        if (h != null) user = user.copyWith(housing: h);
-      }
-      _supabaseService.setCurrentUser(user);
     }
 
     // 3. Jika sudah pernah diisi (baik di DB Supabase maupun di lokal HP/Laptop), JANGAN munculkan dialog lagi!
@@ -99,7 +111,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() => _isLoading = true);
     try {
       final reports = await _supabaseService.getAllPickupRequests();
-      final petugasList = await _supabaseService.getUsersByRole('petugas');
 
       final completed = reports
           .where(
@@ -115,7 +126,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _recentReports = reports.take(3).toList();
           _completedCount = completed;
           _pendingCount = pending;
-          _activePetugasCount = petugasList.length;
           _isLoading = false;
         });
       }
@@ -434,71 +444,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     );
                   }),
 
-                const SizedBox(height: 22),
-
-                // Section: Petugas hari ini
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Petugas aktif',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$_activePetugasCount terdaftar',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                // Schedule Card
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBg, // #FFFFFF
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border), // #D9DDD7
-                  ),
-                  padding: const EdgeInsets.all(14.0),
-                  child: Column(
-                    children: [
-                      _buildShiftItem(
-                        time: '08.00',
-                        task: 'Angkut sampah - Blok A–C',
-                        workers: '$_activePetugasCount petugas',
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Divider(color: AppColors.border, height: 1),
-                      ),
-                      _buildShiftItem(
-                        time: '14.00',
-                        task: 'Pembersihan TPS Induk',
-                        workers: 'Standby shift',
-                      ),
-                    ],
-                  ),
-                ),
-
                 const SizedBox(height: 16),
               ],
             ),
@@ -670,50 +615,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildShiftItem({
-    required String time,
-    required String task,
-    required String workers,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          decoration: BoxDecoration(
-            color: AppColors.cardSubtle,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            time,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryGreen,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            task,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-        Text(
-          workers,
-          style: const TextStyle(
-            fontSize: 11.5,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 }
